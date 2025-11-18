@@ -196,43 +196,6 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
     </div>
 
     <!-- NOWY BLOK JAVASCRIPT DO OBSŁUGI FORMULARZA -->
-    <script>
-        document.getElementById('review-form').addEventListener('submit', function(event) {
-            // 1. Zapobiegaj domyślnej akcji formularza (przeładowaniu strony)
-            event.preventDefault();
-
-            // 2. Zbierz dane z formularza
-            const ratingValue = document.querySelector('input[name="rating"]:checked').value;
-            const reviewerName = document.getElementById('reviewer-name').value;
-            const reviewText = document.getElementById('review-text').value;
-            
-            // 3. Utwórz gwiazdki na podstawie oceny
-            let stars = '';
-            for (let i = 0; i < 5; i++) {
-                stars += (i < ratingValue) ? '★' : '☆';
-            }
-            
-            // 4. Stwórz nowy element HTML dla opinii
-            const newReview = document.createElement('div');
-            newReview.classList.add('review');
-            
-            const today = new Date();
-            const dateString = today.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            newReview.innerHTML = `
-                <div class="rating">${stars}</div>
-                <p>${reviewText}</p>
-                <span class="review-author">${reviewerName}</span>, <span class="review-date">${dateString}</span>
-            `;
-            
-            // 5. Dodaj nową opinię na górze listy opinii
-            const reviewList = document.getElementById('review-list');
-            reviewList.prepend(newReview);
-            
-            // 6. Wyczyść formularz i poinformuj użytkownika
-            this.reset();
-            alert('Dziękujemy! Twoja opinia została dodana.');
-        });
-    </script>
+    
 </body>
 </html>
