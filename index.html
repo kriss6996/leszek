@@ -3,51 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!DOCTYPE html><html lang="pl"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Dr n. med. Leszek - Lekarz hobbysta Proktolog i Ginekolog - Poznań | TwójOtwór.pl.pl</title> <style> /* --- Istniejące style (bez zmian) --- */ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f5f7; margin: 0; padding: 0; } .container { max-width: 960px; margin: 20px auto; padding: 20px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); } header { border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; } header h1 { color: #007bff; font-size: 24px; } .profile-card { display: flex; border-bottom: 1px solid #eee; padding-bottom: 20px; } .profile-photo { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 3px solid #eee; } .profile-details h2 { margin: 0 0 10px 0; font-size: 28px; color: #222; } .profile-details p { margin: 5px 0; color: #555; } .rating { color: #f8b400; font-size: 18px; } .badge { background-color: #e0f2fe; color: #0c5460; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; margin-right: 10px; } .booking-button { background-color: #007bff; color: white; padding: 15px 25px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; text-transform: uppercase; font-weight: bold; margin-top: 15px; } .booking-button:hover { background-color: #0056b3; } .section { margin-top: 30px; } .section h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; font-size: 22px; color: #333; } .address-card { border: 1px solid #ddd; padding: 20px; border-radius: 5px; margin-bottom: 20px; } .calendar { margin-top: 20px; } .calendar .day { display: inline-block; text-align: center; margin: 5px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; } .calendar .slot { display: inline-block; background-color: #e7f3ff; color: #007bff; padding: 8px 12px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; } .calendar .slot:hover { background-color: #cce5ff; } .calendar .unavailable { color: #aaa; background-color: #f8f9fa; } .review { border-bottom: 1px solid #eee; padding: 15px 0; } .review:last-child { border-bottom: none; } .review-author { font-weight: bold; } .review-date { color: #888; font-size: 14px; } .price-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #ddd; } footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #888; font-size: 14px; }
-text
+    <title>Dr n. med. Leszek - Lekarz hobbysta Proktolog i Ginekolog - Poznań | TwójOtwór.pl.pl</title>
+    <style>
+        /* --- Istniejące style (ogólne) --- */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f5f7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        header {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { color: #007bff; font-size: 24px; }
+        .profile-card { display: flex; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .profile-photo { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 3px solid #eee; }
+        .profile-details h2 { margin: 0 0 10px 0; font-size: 28px; color: #222; }
+        .profile-details p { margin: 5px 0; color: #555; }
+        .rating { color: #f8b400; font-size: 18px; }
+        .badge {
+            background-color: #e0f2fe;
+            color: #0c5460;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .booking-button {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .booking-button:hover { background-color: #0056b3; }
+        .section { margin-top: 30px; }
+        .section h3 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #333;
+        }
+        .address-card { border: 1px solid #ddd; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .calendar { margin-top: 20px; }
+        .calendar .day {
+            display: inline-block;
+            text-align: center;
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .calendar .slot {
+            display: inline-block;
+            background-color: #e7f3ff;
+            color: #007bff;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .calendar .slot:hover { background-color: #cce5ff; }
+        .calendar .unavailable { color: #aaa; background-color: #f8f9fa; }
+        .review { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .review:last-child { border-bottom: none; }
+        .review-author { font-weight: bold; }
+        .review-date { color: #888; font-size: 14px; }
 
-    /* --- NOWE STYLE DLA FORMULARZA OCEN --- */
-    .add-review-form { border: 1px solid #ddd; border-radius: 5px; padding: 20px; margin-top: 30px; background-color: #fafafa; }
-    .add-review-form h4 { margin-top: 0; font-size: 20px; color: #333; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-group input[type="text"], .form-group textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box; /* Ważne dla zachowania szerokości 100% */
-    }
-    .form-group textarea { resize: vertical; min-height: 100px; }
+        /* Cennik – podstawowy wygląd (PC) */
+        .price-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .price-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px dashed #ddd;
+            gap: 10px;
+        }
+        .price-list .desc {
+            flex: 2;
+            padding-right: 10px;
+        }
+        .price-list .desc-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .price-list .desc-detail {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .price-list .cost {
+            flex: 0 0 auto;
+            white-space: nowrap;
+            font-weight: bold;
+            color: #007bff;
+            text-align: right;
+        }
+        .price-list .note {
+            display: block;
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 2px;
+        }
 
-    /* Style dla interaktywnych gwiazdek */
-    .star-rating-input { display: inline-block; direction: rtl; }
-    .star-rating-input label {
-        color: #ddd;
-        cursor: pointer;
-        font-size: 30px;
-        padding: 0 2px;
-        transition: color 0.2s;
-    }
-    .star-rating-input input[type="radio"] { display: none; }
-    .star-rating-input label:hover,
-    .star-rating-input label:hover ~ label,
-    .star-rating-input input[type="radio"]:checked ~ label { color: #f8b400; }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #888;
+            font-size: 14px;
+        }
 
-    .submit-review-button {
-        background-color: #28a745;
-        color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    .submit-review-button:hover { background-color: #218838; }
+        /* --- NOWE STYLE DLA FORMULARZA OCEN --- */
+        .add-review-form {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 30px;
+            background-color: #fafafa;
+        }
+        .add-review-form h4 { margin-top: 0; font-size: 20px; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input[type="text"], .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea { resize: vertical; min-height: 100px; }
 
-</style>
-</head> <body>
+        /* Style dla interaktywnych gwiazdek */
+        .star-rating-input { display: inline-block; direction: rtl; }
+        .star-rating-input label {
+            color: #ddd;
+            cursor: pointer;
+            font-size: 30px;
+            padding: 0 2px;
+            transition: color 0.2s;
+        }
+        .star-rating-input input[type="radio"] { display: none; }
+        .star-rating-input label:hover,
+        .star-rating-input label:hover ~ label,
+        .star-rating-input input[type="radio"]:checked ~ label { color: #f8b400; }
+
+        .submit-review-button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .submit-review-button:hover { background-color: #218838; }
+
+        /* --- MEDIA QUERY: poprawka cennika na telefony --- */
+        @media (max-width: 768px) {
+            .price-list li {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .price-list .cost {
+                text-align: left;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+  </head> <body>
 
 <div class="container">
     <!-- ... (Reszta strony: header, profil, o mnie, adresy - bez zmian) ... -->
@@ -127,175 +280,6 @@ text
 
             
         </section>
-
-    <title>Cennik Dr Leszka - Proktolog Hobbysta</title>
-    <style>
-        body { 
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #333; 
-            background: linear-gradient(135deg, #f4f5f7 0%, #e0f2fe 100%); 
-            margin: 0; 
-            padding: 40px 20px; 
-            min-height: 100vh;
-        }
-        .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: #fff; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-            border-radius: 15px; 
-            overflow: hidden;
-        }
-        header { 
-            background: linear-gradient(135deg, #007bff, #0056b3); 
-            color: white; 
-            padding: 30px; 
-            text-align: center;
-        }
-        header h1 { 
-            margin: 0; 
-            font-size: 2.5em; 
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        header p { 
-            margin: 10px 0 0 0; 
-            opacity: 0.9; 
-            font-size: 1.2em;
-        }
-        
-        .price-section { 
-            padding: 40px; 
-        }
-        h3 { 
-            border-bottom: 4px solid #007bff; 
-            padding-bottom: 15px; 
-            margin-bottom: 30px; 
-            font-size: 2em; 
-            color: #222; 
-            text-align: center;
-            position: relative;
-        }
-        h3::after {
-            content: "🍑"; 
-            position: absolute; 
-            right: -40px; 
-            top: -10px; 
-            font-size: 2.5em;
-        }
-        
-        .price-list { 
-            list-style: none; 
-            padding: 0; 
-        }
-        .price-list li { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start;
-            padding: 25px 20px; 
-            margin-bottom: 10px;
-            background: #f8f9ff; 
-            border: 2px solid #e7f3ff;
-            border-radius: 12px; 
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .price-list li:hover { 
-            background: linear-gradient(135deg, #cce5ff, #b8daff); 
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,123,255,0.3);
-        }
-        .price-list li:nth-child(even):hover {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        }
-        
-        .desc { 
-            flex: 2; 
-            padding-right: 20px;
-        }
-        .desc-title { 
-            font-weight: bold; 
-            color: #222; 
-            font-size: 1.3em; 
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-        }
-        .desc-title::before {
-            content: "🔍"; 
-            margin-right: 10px; 
-            font-size: 1.5em;
-        }
-        .desc-detail { 
-            font-size: 0.95em; 
-            color: #666; 
-            line-height: 1.5;
-            background: rgba(255,255,255,0.7);
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-        }
-        
-        .cost { 
-            flex: 1; 
-            text-align: right;
-            font-size: 1.8em; 
-            font-weight: 900; 
-            color: #28a745; 
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-        .note { 
-            font-size: 0.75em; 
-            color: #999; 
-            text-align: right; 
-            margin-top: 5px;
-            font-style: italic;
-        }
-        
-        .promo { 
-            background: linear-gradient(135deg, #ffc107, #ff8c00) !important;
-            border-color: #ff6b35 !important;
-            color: #333;
-        }
-        .promo:hover {
-            background: linear-gradient(135deg, #ff8c00, #ff6b35) !important;
-            transform: translateY(-5px) scale(1.02);
-        }
-        .promo .cost {
-            color: #fff;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-        
-        footer { 
-            text-align: center; 
-            padding: 20px; 
-            background: #f8f9fa; 
-            color: #666; 
-            font-size: 0.9em;
-        }
-        
-        /* --- NOWOŚĆ: Media Query dla telefonów --- */
-        @media (max-width: 768px) {
-            .price-list li {
-                flex-direction: column; /* Zmiana: elementy ułożą się jeden pod drugim */
-                align-items: center; /* Wyśrodkowanie elementów */
-            }
-
-            .desc {
-                flex: 1 1 100%; /* Opis zajmie 100% szerokości */
-                padding-right: 0; /* Usunięcie paddingu po prawej */
-                margin-bottom: 15px; /* Dodanie przestrzeni między opisem a ceną */
-                text-align: center; /* Wyśrodkowanie tekstu */
-            }
-
-            .cost {
-                flex: 1 1 100%; /* Cena też zajmie 100% szerokości */
-                text-align: center; /* Wyśrodkowanie ceny */
-            }
-        }
-    </style>
-</head>
 <body>
     <div class="container">
         <header>
