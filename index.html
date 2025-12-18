@@ -124,60 +124,240 @@ text
             
         </section>
 
-        <section class="section" id="cennik">
-            <!-- ... (Cennik bez zmian) ... -->
-            <h3>Cennik</h3>
+        <title>Cennik Dr Leszka - Proktolog Hobbysta</title>
+    <style>
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            background: linear-gradient(135deg, #f4f5f7 0%, #e0f2fe 100%); 
+            margin: 0; 
+            padding: 40px 20px; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #fff; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            border-radius: 15px; 
+            overflow: hidden;
+        }
+        header { 
+            background: linear-gradient(135deg, #007bff, #0056b3); 
+            color: white; 
+            padding: 30px; 
+            text-align: center;
+        }
+        header h1 { 
+            margin: 0; 
+            font-size: 2.5em; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        header p { 
+            margin: 10px 0 0 0; 
+            opacity: 0.9; 
+            font-size: 1.2em;
+        }
+        
+        .price-section { 
+            padding: 40px; 
+        }
+        h3 { 
+            border-bottom: 4px solid #007bff; 
+            padding-bottom: 15px; 
+            margin-bottom: 30px; 
+            font-size: 2em; 
+            color: #222; 
+            text-align: center;
+            position: relative;
+        }
+        h3::after {
+            content: "🍑"; 
+            position: absolute; 
+            right: -40px; 
+            top: -10px; 
+            font-size: 2.5em;
+        }
+        
+        .price-list { 
+            list-style: none; 
+            padding: 0; 
+        }
+        .price-list li { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start;
+            padding: 25px 20px; 
+            margin-bottom: 10px;
+            background: #f8f9ff; 
+            border: 2px solid #e7f3ff;
+            border-radius: 12px; 
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .price-list li:hover { 
+            background: linear-gradient(135deg, #cce5ff, #b8daff); 
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+        }
+        .price-list li:nth-child(even):hover {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        }
+        
+        .desc { 
+            flex: 2; 
+            padding-right: 20px;
+        }
+        .desc-title { 
+            font-weight: bold; 
+            color: #222; 
+            font-size: 1.3em; 
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .desc-title::before {
+            content: "🔍"; 
+            margin-right: 10px; 
+            font-size: 1.5em;
+        }
+        .desc-detail { 
+            font-size: 0.95em; 
+            color: #666; 
+            line-height: 1.5;
+            background: rgba(255,255,255,0.7);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .cost { 
+            flex: 1; 
+            text-align: right;
+            font-size: 1.8em; 
+            font-weight: 900; 
+            color: #28a745; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .note { 
+            font-size: 0.75em; 
+            color: #999; 
+            text-align: right; 
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .promo { 
+            background: linear-gradient(135deg, #ffc107, #ff8c00) !important;
+            border-color: #ff6b35 !important;
+            color: #333;
+        }
+        .promo:hover {
+            background: linear-gradient(135deg, #ff8c00, #ff6b35) !important;
+            transform: translateY(-5px) scale(1.02);
+        }
+        .promo .cost {
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        footer { 
+            text-align: center; 
+            padding: 20px; 
+            background: #f8f9fa; 
+            color: #666; 
+            font-size: 0.9em;
+        }
+        @media (max-width: 768px) {
+            .price-list li {
+                flex-direction: column;
+                text-align: center;
+            }
+            .desc {
+                padding-right: 0;
+                margin-bottom: 15px;
+            }
+            h3::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍑 Cennik Usług 🍑</h1>
+            <p>Dr n. med. Leszek "Głęboki Nurk" - Proktolog Hobbysta</p>
+        </header>
+
+        <section class="price-section">
+            <h3>"Tylny Front" - Pełen Serwis</h3>
+            
             <ul class="price-list">
-                <li><span>Konsultacja internistyczna / wizyta pierwszorazowa</span> <strong>250 zł</strong></li>
-                <li><span>Konsultacja kontrolna</span> <strong>200 zł</strong></li>
+                <li>
+                    <div class="desc">
+                        <div class="desc-title">Badanie prostaty palcem (metoda "Mokry Start")</div>
+                        <div class="desc-detail">
+                            Mój palec + Twoja prostata + dużo śliny premium. Bez żelu - natura wie lepiej. 
+                            <br><strong>Bonus:</strong> chusteczka na finał + rada "nie spiesz się"
+                        </div>
+                    </div>
+                    <div class="cost">200 zł <span class="note">🔥 Najpopularniejsze</span></div>
+                </li>
+
+                <li>
+                    <div class="desc">
+                        <div class="desc-title">Wybielanie odbytu metodą naturalną</div>
+                        <div class="desc-detail">
+                            Smyranie siusiakiem dr. Leszka aż do uzyskania oczekiwanego koloru. 
+                            Efekt: biel papieru ksero. Sesja 30 min.
+                        </div>
+                    </div>
+                    <div class="cost">150 zł</div>
+                </li>
+
+                <li>
+                    <div class="desc">
+                        <div class="desc-title">Wpychanie wypadniętego odbytu ("Manualny Reset")</div>
+                        <div class="desc-detail">Wielki Powrót Różowej Meduzy (do akwarium z powrotem!)  
+"Tutaj była dziura? Już nie ma . Magia rąk dr Leszka™"  
+Efekt: odbyt wraca na swoje miejsce z oklaskami
+                    </div>
+                    <div class="cost">300 zł <span class="note">Gwarancja 24h</span></div>
+                </li>
+
+                <li>
+                    <div class="desc">
+                        <div class="desc-title">Zszywanie odbytu ("Szewc bez butów")</div>
+                        <div class="desc-detail">
+                            Precyzyjne szycie nićmi wędkarskimi. "Pękasz - zszyjemy!" 
+                            Za ciasno? Dopasuję na miarę. Kto bedzie "miarą" ? Nie pytaj, tylko zamknij oczy. Dr Leszek załatwi sprawę !
+                        </div>
+                    </div>
+                    <div class="cost">500 zł</div>
+                </li>
+
+                <li class="promo">
+                    <div class="desc">
+                        <div class="desc-title">🌟 PEŁEN PAKIET "POZNAŃSKI WYCIŚK" 🌟</div>
+                        <div class="desc-detail">
+                            <strong>Wszystko naraz + masaż relaksacyjny + klaps na pożegnanie</strong><br>
+                            Wybielanie + Wpychanie + Palcówka + Ślinoteka VIP<br>
+                            <em>Oszczędzasz 450 zł! BESTSELLER Miesiąca!</em>
+                        </div>
+                    </div>
+                    <div class="cost">800 zł <span class="note">💰 RABAT 35%</span></div>
+                </li>
             </ul>
         </section>
-    </main>
 
-    <footer>
-        <p>TwojOtwor.pl © 2025 - Wszelkie prawa zastrzeżone grupa 69.</p>
-        <p><a href="#">Regulamin</a> | <a href="#">Polityka Prywatności</a></p>
-    </footer>
-
+        <footer>
+            <p>💸 Płatność gotówką lub w naturze </p>
+            <p><small>TwójOtwór.pl © 2025 </small></p>
+        </footer>
+      
 </div>
 
-<!-- NOWY BLOK JAVASCRIPT DO OBSŁUGI FORMULARZA -->
-<script>
-    document.getElementById('review-form').addEventListener('submit', function(event) {
-        // 1. Zapobiegaj domyślnej akcji formularza (przeładowaniu strony)
-        event.preventDefault();
-
-        // 2. Zbierz dane z formularza
-        const ratingValue = document.querySelector('input[name="rating"]:checked').value;
-        const reviewerName = document.getElementById('reviewer-name').value;
-        const reviewText = document.getElementById('review-text').value;
-
-        // 3. Utwórz gwiazdki na podstawie oceny
-        let stars = '';
-        for (let i = 0; i < 5; i++) {
-            stars += (i < ratingValue) ? '★' : '☆';
-        }
-
-        // 4. Stwórz nowy element HTML dla opinii
-        const newReview = document.createElement('div');
-        newReview.classList.add('review');
-
-        const today = new Date();
-        const dateString = today.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
-
-        newReview.innerHTML = `
-            <div class="rating">${stars}</div>
-            <p>${reviewText}</p>
-            <span class="review-author">${reviewerName}</span>, <span class="review-date">${dateString}</span>
-        `;
-
-        // 5. Dodaj nową opinię na górze listy opinii
-        const reviewList = document.getElementById('review-list');
-        reviewList.prepend(newReview);
-
-        // 6. Wyczyść formularz i poinformuj użytkownika
-        this.reset();
-        alert('Dziękujemy! Twoja opinia została dodana.');
-    });
-</script>
 </body> </html>
