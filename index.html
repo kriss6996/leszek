@@ -1,108 +1,75 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr n. med. Leszek - Lekarz hobbysta Proktolog i Ginekolog - Poznań  | TwójOtwór.pl.pl</title>
-    <style>
-        /* --- Istniejące style (bez zmian) --- */
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f5f7; margin: 0; padding: 0; }
-        .container { max-width: 960px; margin: 20px auto; padding: 20px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        header { border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { color: #007bff; font-size: 24px; }
-        .profile-card { display: flex; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .profile-photo { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 3px solid #eee; }
-        .profile-details h2 { margin: 0 0 10px 0; font-size: 28px; color: #222; }
-        .profile-details p { margin: 5px 0; color: #555; }
-        .rating { color: #f8b400; font-size: 18px; }
-        .badge { background-color: #e0f2fe; color: #0c5460; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; margin-right: 10px; }
-        .booking-button { background-color: #007bff; color: white; padding: 15px 25px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; text-transform: uppercase; font-weight: bold; margin-top: 15px; }
-        .booking-button:hover { background-color: #0056b3; }
-        .section { margin-top: 30px; }
-        .section h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; font-size: 22px; color: #333; }
-        .address-card { border: 1px solid #ddd; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .calendar { margin-top: 20px; }
-        .calendar .day { display: inline-block; text-align: center; margin: 5px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .calendar .slot { display: inline-block; background-color: #e7f3ff; color: #007bff; padding: 8px 12px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .calendar .slot:hover { background-color: #cce5ff; }
-        .calendar .unavailable { color: #aaa; background-color: #f8f9fa; }
-        .review { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .review:last-child { border-bottom: none; }
-        .review-author { font-weight: bold; }
-        .review-date { color: #888; font-size: 14px; }
-        .price-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #ddd; }
-        footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #888; font-size: 14px; }
+<!DOCTYPE html><html lang="pl"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Dr n. med. Leszek - Lekarz hobbysta Proktolog i Ginekolog - Poznań | TwójOtwór.pl.pl</title> <style> /* --- Istniejące style (bez zmian) --- */ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f5f7; margin: 0; padding: 0; } .container { max-width: 960px; margin: 20px auto; padding: 20px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); } header { border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; } header h1 { color: #007bff; font-size: 24px; } .profile-card { display: flex; border-bottom: 1px solid #eee; padding-bottom: 20px; } .profile-photo { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 3px solid #eee; } .profile-details h2 { margin: 0 0 10px 0; font-size: 28px; color: #222; } .profile-details p { margin: 5px 0; color: #555; } .rating { color: #f8b400; font-size: 18px; } .badge { background-color: #e0f2fe; color: #0c5460; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; margin-right: 10px; } .booking-button { background-color: #007bff; color: white; padding: 15px 25px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; text-transform: uppercase; font-weight: bold; margin-top: 15px; } .booking-button:hover { background-color: #0056b3; } .section { margin-top: 30px; } .section h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; font-size: 22px; color: #333; } .address-card { border: 1px solid #ddd; padding: 20px; border-radius: 5px; margin-bottom: 20px; } .calendar { margin-top: 20px; } .calendar .day { display: inline-block; text-align: center; margin: 5px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; } .calendar .slot { display: inline-block; background-color: #e7f3ff; color: #007bff; padding: 8px 12px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; } .calendar .slot:hover { background-color: #cce5ff; } .calendar .unavailable { color: #aaa; background-color: #f8f9fa; } .review { border-bottom: 1px solid #eee; padding: 15px 0; } .review:last-child { border-bottom: none; } .review-author { font-weight: bold; } .review-date { color: #888; font-size: 14px; } .price-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #ddd; } footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #888; font-size: 14px; }
+text
 
-        /* --- NOWE STYLE DLA FORMULARZA OCEN --- */
-        .add-review-form { border: 1px solid #ddd; border-radius: 5px; padding: 20px; margin-top: 30px; background-color: #fafafa; }
-        .add-review-form h4 { margin-top: 0; font-size: 20px; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input[type="text"], .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box; /* Ważne dla zachowania szerokości 100% */
-        }
-        .form-group textarea { resize: vertical; min-height: 100px; }
+    /* --- NOWE STYLE DLA FORMULARZA OCEN --- */
+    .add-review-form { border: 1px solid #ddd; border-radius: 5px; padding: 20px; margin-top: 30px; background-color: #fafafa; }
+    .add-review-form h4 { margin-top: 0; font-size: 20px; color: #333; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input[type="text"], .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box; /* Ważne dla zachowania szerokości 100% */
+    }
+    .form-group textarea { resize: vertical; min-height: 100px; }
 
-        /* Style dla interaktywnych gwiazdek */
-        .star-rating-input { display: inline-block; direction: rtl; }
-        .star-rating-input label {
-            color: #ddd;
-            cursor: pointer;
-            font-size: 30px;
-            padding: 0 2px;
-            transition: color 0.2s;
-        }
-        .star-rating-input input[type="radio"] { display: none; }
-        .star-rating-input label:hover,
-        .star-rating-input label:hover ~ label,
-        .star-rating-input input[type="radio"]:checked ~ label { color: #f8b400; }
+    /* Style dla interaktywnych gwiazdek */
+    .star-rating-input { display: inline-block; direction: rtl; }
+    .star-rating-input label {
+        color: #ddd;
+        cursor: pointer;
+        font-size: 30px;
+        padding: 0 2px;
+        transition: color 0.2s;
+    }
+    .star-rating-input input[type="radio"] { display: none; }
+    .star-rating-input label:hover,
+    .star-rating-input label:hover ~ label,
+    .star-rating-input input[type="radio"]:checked ~ label { color: #f8b400; }
 
-        .submit-review-button {
-            background-color: #28a745;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .submit-review-button:hover { background-color: #218838; }
+    .submit-review-button {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .submit-review-button:hover { background-color: #218838; }
 
-    </style>
-</head>
-<body>
+</style>
+</head> <body>
+text
 
-    <div class="container">
-        <!-- ... (Reszta strony: header, profil, o mnie, adresy - bez zmian) ... -->
-        <header>
-            <h1>TwójOtwór.pl</h1>
-            <input type="search" placeholder="Szukaj lekarza, specjalizacji...">
-        </header>
-        <main>
-            <div class="profile-card">
-                <img src="image000000.jpeg" alt="Zdjęcie Doktora Leszka" class="profile-photo">
-                <div class="profile-details">
-                    <h2>dr n. med. Leszek hobbysta</h2>
-                    <p><strong> Lekarz hobbysta Proktolog i Ginekolog - Poznań </strong></p>
-                    <div class="rating">
-                        ★★★★☆ 4.92/5 
-                        <span style="color: #555; font-size: 16px;">(182 opinie)</span>
-                    </div>
-                    <p>
-                        <span class="badge">✅ Profil zweryfikowany</span>
-                        <span class="badge">🏆 Laureat nagrody "Empatia 2023"</span>
-                    </p>
+<div class="container">
+    <!-- ... (Reszta strony: header, profil, o mnie, adresy - bez zmian) ... -->
+    <header>
+        <h1>TwójOtwór.pl</h1>
+        <input type="search" placeholder="Szukaj lekarza, specjalizacji...">
+    </header>
+    <main>
+        <div class="profile-card">
+            <img src="image000000.jpeg" alt="Zdjęcie Doktora Leszka" class="profile-photo">
+            <div class="profile-details">
+                <h2>dr n. med. Leszek hobbysta</h2>
+                <p><strong> Lekarz hobbysta Proktolog i Ginekolog - Poznań </strong></p>
+                <div class="rating">
+                    ★★★★☆ 4.92/5 
+                    <span style="color: #555; font-size: 16px;">(182 opinie)</span>
                 </div>
+                <p>
+                    <span class="badge">✅ Profil zweryfikowany</span>
+                    <span class="badge">🏆 Laureat nagrody "Empatia 2023"</span>
+                </p>
             </div>
-            <section class="section" id="o-mnie">
-                <h3>O mnie</h3>
-                <p> Nazywam się dr Leszek i od ponad dwóch dekad z zaangażowaniem i pasją zajmuję się proktologią. Choć wielu może się skrzywić na sam dźwięk tego słowa, ja uważam, że nie ma tematów tabu, jeśli chodzi o zdrowie. 
-
+        </div>
+        <section class="section" id="o-mnie">
+            <h3>O mnie</h3>
+            <p> Nazywam się dr Leszek i od ponad dwóch dekad z zaangażowaniem i pasją zajmuję się proktologią. Choć wielu może się skrzywić na sam dźwięk tego słowa, ja uważam, że nie ma tematów tabu, jeśli chodzi o zdrowie. 
 Proktologia to dla mnie nie tylko specjalizacja medyczna – to misja i... moje niecodzienne hobby. Dlaczego? Bo wiem, że jakość życia zaczyna się tam, gdzie kończy się kręgosłup. 😉 
 
 W codziennej pracy łączę precyzję chirurga z empatią i poczuciem humoru, które – jak sądzą moi pacjenci – potrafią rozładować nawet najtrudniejsze sytuacje. Stawiam na zrozumienie, dyskrecję i przede wszystkim skuteczne leczenie.
@@ -112,125 +79,105 @@ Lubię, jak wszystko jest czyste, ogolone, pachnące i… chętne do badań. Naj
 Prywatnie miłośnik wędkowania i anatomicznych ciekawostek. Tak, naprawdę uważam, że ludzki organizm to fascynująca maszyna – a jego „końcowe odcinki” zasługują na szczególną uwagę.
 
 Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
-</p>
-            </section>
-            <section class="section" id="adresy">
-                <h3>Adresy i kalendarz</h3>
-                <div class="address-card">
-                     <h4>Centrum Medyczne " TwójOtwór.pl "</h4>
-                     <h4>Nr tel.: ***** 5028 </h4>
-                    <p>📍 ul. Bałtycka 65, 61-017 Poznań </p>
-                    <div class="calendar">
-                        <div class="day"><span><strong>Ranna zmiana, Biuro VMI</strong></span><br><div class="slot">14:15</div><div class="slot">14:35</div></div>
-                        <div class="day"><span><strong>Nocna zmiana, Biuro VMI</strong></span><br><div class="slot">22:00</div><div class="slot">22:20</div></div>
-                    </div>
+
+</p> </section> <section class="section" id="adresy"> <h3>Adresy i kalendarz</h3> <div class="address-card"> <h4>Centrum Medyczne " TwójOtwór.pl "</h4> <h4>Nr tel.: ***** 5028 </h4> <p>📍 ul. Bałtycka 65, 61-017 Poznań </p> <div class="calendar"> <div class="day"><span><strong>Ranna zmiana, Biuro VMI</strong></span><br><div class="slot">14:15</div><div class="slot">14:35</div></div> <div class="day"><span><strong>Nocna zmiana, Biuro VMI</strong></span><br><div class="slot">22:00</div><div class="slot">22:20</div></div> </div> </div> </section>
+text
+
+        <section class="section" id="opinie">
+            <h3>Opinie pacjentów (182)</h3>
+
+            <!-- Kontener na dynamicznie dodawane opinie -->
+            <div id="review-list">
+                <div class="review">
+                    <div class="rating">★★★★★</div>
+                    <p>"Najlepsze 15 minut mojego życia. Leżę na boku, nogi w górze, a doktor Leszek powoli, głęboko, z takim profesjonalnym namaszczeniem… Jak zaczął tymi palcami kręcić kółka w środku, to dosłownie jęknąłem jak dziwka. On tylko cicho: ‘Widzę, że pan lubi głębiej’. I poszedł głębiej. Wyszedłem z pustymi jajami i uśmiechem do usranej śmierci."</p>
+                    <span class="review-author">Przemek N.</span>, <span class="review-date">14 listopada 2025</span>
+                    <div class="rating">★★★★★</div>
+                    <p>"Jak powiedział: „Niech się pan schyli i sam rozchyl pośladki” … to mało nie padłem na kolana z wrażenia. A jak potem wszedł we mnie , osobiście naślinionym wziernikiem … Jezu, myślałem, że to pornograficzny film. Do tego jeszcze te jego komentarze: „Ooo, jaka piękna , różowa meduza” . Wróciłem po tygodniu ‘na kontrolę’ – bez skierowania."</p>
+                    <span class="review-author">Dominik P.</span>, <span class="review-date">13 listopada 2025</span>
+                    <div class="rating">★★★★★</div>
+                    <p>"Przyszedłem z hemoroidami, wyszedłem z orgazmem. Serio. Doktor tak długo i dokładnie ‘masował’ prostatę, że w pewnym momencie mówię: ‘Panie doktorze, ja zaraz…’, a on tylko spokojnie: ‘Proszę się nie krępować, to naturalna reakcja’. I dalej swoje. Skończyłem w chusteczce, którą mi podał z uśmiechem. Żona teraz pyta dlaczego tak chętnie chodzę na kontrole."</p>
+                    <span class="review-author">Marcin W.</span>, <span class="review-date">12 listopada 2025</span>
+                <div class="rating">★★★★★</div>
+                    <p>"Mówił: ‘Proszę się rozluźnić’. Ja się rozluźniłem tak bardzo, że mało nie zleciałem  z fotela. Wsunął dwa palce i zaczął ‘badać prostatę’, ...Myślałem, że zaraz eksploduję mu na fartuch. W życiu nie spuściłem się tak bez dotykania kutasa. Najlepsza wizyta ever"</p>
+                    <span class="review-author">Bartosz W.</span>, <span class="review-date">11 listopada 2025</span>
+                <div class="rating">★★★★★</div>
+                    <p>"Pierwszy raz w życiu poszedłem do proktologa z twardym kutasem, a wyszedłem z jeszcze twardszym. Doktor Leszek tak mi tam paluszkiem pomieszał, że do dzisiaj jak siadam to czuję, że coś mi tam jeszcze drgnęło. 11/10, polecam nawet zdrowym – dla czystej przyjemności."</p>
+                    <span class="review-author">Adraian O.</span>, <span class="review-date">10 listopada 2025</span>
+                <div class="rating">★★★★★</div>
+                    <p>"Profesjonalista w każdym calu. Pan Doktor ma niesamowite wyczucie i potrafi tak zbadać temat, że pacjent od razu czuje się zaopiekowany. Szczególnie polecam jego "badanie palcem" – prawdziwa poezja. Widać, że kocha swoją pracę i wykonuje ją z pasją. Wychodząc, miałem ochotę zapytać, czy przyjmuje prywatnie po godzinach. Dla stałych klientów może zrobiłby rabat?"</p>
+                    <span class="review-author">Krzysztof G.</span>, <span class="review-date">12 maja 2024</span>
                 </div>
-            </section>
-
-            <section class="section" id="opinie">
-                <h3>Opinie pacjentów (182)</h3>
-
-                <!-- Kontener na dynamicznie dodawane opinie -->
-                <div id="review-list">
-                    <div class="review">
-                        <div class="rating">★★★★★</div>
-                        <p>"Najlepsze 15 minut mojego życia. Leżę na boku, nogi w górze, a doktor Leszek powoli, głęboko, z takim profesjonalnym namaszczeniem… Jak zaczął tymi palcami kręcić kółka w środku, to dosłownie jęknąłem jak dziwka. On tylko cicho: ‘Widzę, że pan lubi głębiej’. I poszedł głębiej. Wyszedłem z pustymi jajami i uśmiechem do usranej śmierci."</p>
-                        <span class="review-author">Przemek N.</span>, <span class="review-date">14 listopada 2025</span>
-                        <div class="rating">★★★★★</div>
-                        <p>"Jak powiedział: „Niech się pan schyli i sam rozchyl pośladki” … to mało nie padłem na kolana z wrażenia. A jak potem wszedł we mnie , osobiście naślinionym wziernikiem … Jezu, myślałem, że to pornograficzny film. Do tego jeszcze te jego komentarze: „Ooo, jaka piękna , różowa meduza” . Wróciłem po tygodniu ‘na kontrolę’ – bez skierowania."</p>
-                        <span class="review-author">Dominik P.</span>, <span class="review-date">13 listopada 2025</span>
-                        <div class="rating">★★★★★</div>
-                        <p>"Przyszedłem z hemoroidami, wyszedłem z orgazmem. Serio. Doktor tak długo i dokładnie ‘masował’ prostatę, że w pewnym momencie mówię: ‘Panie doktorze, ja zaraz…’, a on tylko spokojnie: ‘Proszę się nie krępować, to naturalna reakcja’. I dalej swoje. Skończyłem w chusteczce, którą mi podał z uśmiechem. Żona teraz pyta dlaczego tak chętnie chodzę na kontrole."</p>
-                        <span class="review-author">Marcin W.</span>, <span class="review-date">12 listopada 2025</span>
+                <div class="review">
                     <div class="rating">★★★★★</div>
-                        <p>"Mówił: ‘Proszę się rozluźnić’. Ja się rozluźniłem tak bardzo, że mało nie zleciałem  z fotela. Wsunął dwa palce i zaczął ‘badać prostatę’, ...Myślałem, że zaraz eksploduję mu na fartuch. W życiu nie spuściłem się tak bez dotykania kutasa. Najlepsza wizyta ever"</p>
-                        <span class="review-author">Bartosz W.</span>, <span class="review-date">11 listopada 2025</span>
-                    <div class="rating">★★★★★</div>
-                        <p>"Pierwszy raz w życiu poszedłem do proktologa z twardym kutasem, a wyszedłem z jeszcze twardszym. Doktor Leszek tak mi tam paluszkiem pomieszał, że do dzisiaj jak siadam to czuję, że coś mi tam jeszcze drgnęło. 11/10, polecam nawet zdrowym – dla czystej przyjemności."</p>
-                        <span class="review-author">Adraian O.</span>, <span class="review-date">10 listopada 2025</span>
-                    <div class="rating">★★★★★</div>
-                        <p>"Profesjonalista w każdym calu. Pan Doktor ma niesamowite wyczucie i potrafi tak zbadać temat, że pacjent od razu czuje się zaopiekowany. Szczególnie polecam jego "badanie palcem" – prawdziwa poezja. Widać, że kocha swoją pracę i wykonuje ją z pasją. Wychodząc, miałem ochotę zapytać, czy przyjmuje prywatnie po godzinach. Dla stałych klientów może zrobiłby rabat?"</p>
-                        <span class="review-author">Krzysztof G.</span>, <span class="review-date">12 maja 2024</span>
-                    </div>
-                    <div class="review">
-                        <div class="rating">★★★★★</div>
-                        <p>"Byłem u kilku proktologów, ale żaden nie był tak... zaangażowany. Doktor Leszek włożył w badanie całe serce. I rękę. Aż po łokieć. Może dla niektórych to za dużo, ja doceniam profesjonalizm, ale czułem się trochę jak na castingu do filmu dla dorosłych. Mimo wszystko, diagnoza trafiona. Minus jedna gwiazdka za zbyt entuzjastyczne okrzyki w trakcie."</p>
-                        <span class="review-author">Dawid P.</span>, <span class="review-date">28 kwietnia 2024</span>
-                    </div>
-                    <div class="review">
-                        <div class="rating">★★★★★</div>
-                        <p>"Na początku byłem spięty, ale Doktor Leszek od razu rozładował atmosferę. Jego komentarze w stylu: "Ooo, a co my tu mamy?", "Proszę się rozluźnić, nie będę gryzł" i "Zobaczy pan, jaki będzie zadowolony" wprowadziły trochę niezręcznej wesołości. Badanie było tak wnikliwe, że przez chwilę zapomniałem, po co przyszedłem. Trochę się zagalopował z tym masażem prostaty, ale co tam. 5 gwiazdek za odwagę."</p>
-                        <span class="review-author">Maurycy R.</span>, <span class="review-date">15 kwietnia 2024</span>
-                    </div>
+                    <p>"Byłem u kilku proktologów, ale żaden nie był tak... zaangażowany. Doktor Leszek włożył w badanie całe serce. I rękę. Aż po łokieć. Może dla niektórych to za dużo, ja doceniam profesjonalizm, ale czułem się trochę jak na castingu do filmu dla dorosłych. Mimo wszystko, diagnoza trafiona. Minus jedna gwiazdka za zbyt entuzjastyczne okrzyki w trakcie."</p>
+                    <span class="review-author">Dawid P.</span>, <span class="review-date">28 kwietnia 2024</span>
                 </div>
-                <a href="#" style="display: block; margin-top: 20px; font-weight: bold; color: #007bff;">Zobacz wszystkie opinie (182)</a>
+                <div class="review">
+                    <div class="rating">★★★★★</div>
+                    <p>"Na początku byłem spięty, ale Doktor Leszek od razu rozładował atmosferę. Jego komentarze w stylu: "Ooo, a co my tu mamy?", "Proszę się rozluźnić, nie będę gryzł" i "Zobaczy pan, jaki będzie zadowolony" wprowadziły trochę niezręcznej wesołości. Badanie było tak wnikliwe, że przez chwilę zapomniałem, po co przyszedłem. Trochę się zagalopował z tym masażem prostaty, ale co tam. 5 gwiazdek za odwagę."</p>
+                    <span class="review-author">Maurycy R.</span>, <span class="review-date">15 kwietnia 2024</span>
+                </div>
+            </div>
+            <a href="#" style="display: block; margin-top: 20px; font-weight: bold; color: #007bff;">Zobacz wszystkie opinie (182)</a>
 
-                
-            </section>
+            
+        </section>
 
-            <section class="section" id="cennik">
-    <h3>Cennik</h3>
-    <ul class="price-list">
-        <li><span>Konsultacja internistyczna / wizyta pierwszorazowa</span> <strong>250 zł</strong></li>
-        <li><span>Konsultacja kontrolna</span> <strong>200 zł</strong></li>
-        <!-- NOWE USŁUGI Z HUMOREM -->
-        <li><span>Wybielanie odbytu metodą naturalną (sok z cytryny + księżyc)</span> <strong>150 zł</strong></li>
-        <li><span>Zszywanie odbytu (nićmi z emocji)</span> <strong>250 zł</strong> <small>(zniżka 20% z plastrami na dumę)</small></li>
-        <li><span>Wkładanie wypadniętego odbytu (z podnośnikiem emocjonalnym)</span> <strong>300 zł</strong></li>
-        <li><span>Badanie prostaty palcem (poślinionym przez lekarza)</span> <strong>200 zł</strong> <small>(VIP z muzyką)</small></li>
-    </ul>
-    <div style="margin-top: 15px; padding: 10px; background-color: #e7f3ff; border-radius: 5px;">
-        <strong>Pakiet "Full Backend" (4 usługi):</strong> 750 zł zamiast 900 zł!<br>
-        <small>Rabat dla stałych klientów: 10% przy wizycie w tym samym tygodniu</small>
-    </div>
-</section>
-        </main>
+        <section class="section" id="cennik">
+            <!-- ... (Cennik bez zmian) ... -->
+            <h3>Cennik</h3>
+            <ul class="price-list">
+                <li><span>Konsultacja internistyczna / wizyta pierwszorazowa</span> <strong>250 zł</strong></li>
+                <li><span>Konsultacja kontrolna</span> <strong>200 zł</strong></li>
+            </ul>
+        </section>
+    </main>
 
-        <footer>
-            <p>LekarzOnline.pl © 2024 - Wszelkie prawa zastrzeżone.</p>
-            <p><a href="#">Regulamin</a> | <a href="#">Polityka Prywatności</a></p>
-        </footer>
+    <footer>
+        <p>LekarzOnline.pl © 2024 - Wszelkie prawa zastrzeżone.</p>
+        <p><a href="#">Regulamin</a> | <a href="#">Polityka Prywatności</a></p>
+    </footer>
 
-    </div>
+</div>
 
-    <!-- NOWY BLOK JAVASCRIPT DO OBSŁUGI FORMULARZA -->
-    <script>
-        document.getElementById('review-form').addEventListener('submit', function(event) {
-            // 1. Zapobiegaj domyślnej akcji formularza (przeładowaniu strony)
-            event.preventDefault();
+<!-- NOWY BLOK JAVASCRIPT DO OBSŁUGI FORMULARZA -->
+<script>
+    document.getElementById('review-form').addEventListener('submit', function(event) {
+        // 1. Zapobiegaj domyślnej akcji formularza (przeładowaniu strony)
+        event.preventDefault();
 
-            // 2. Zbierz dane z formularza
-            const ratingValue = document.querySelector('input[name="rating"]:checked').value;
-            const reviewerName = document.getElementById('reviewer-name').value;
-            const reviewText = document.getElementById('review-text').value;
+        // 2. Zbierz dane z formularza
+        const ratingValue = document.querySelector('input[name="rating"]:checked').value;
+        const reviewerName = document.getElementById('reviewer-name').value;
+        const reviewText = document.getElementById('review-text').value;
 
-            // 3. Utwórz gwiazdki na podstawie oceny
-            let stars = '';
-            for (let i = 0; i < 5; i++) {
-                stars += (i < ratingValue) ? '★' : '☆';
-            }
+        // 3. Utwórz gwiazdki na podstawie oceny
+        let stars = '';
+        for (let i = 0; i < 5; i++) {
+            stars += (i < ratingValue) ? '★' : '☆';
+        }
 
-            // 4. Stwórz nowy element HTML dla opinii
-            const newReview = document.createElement('div');
-            newReview.classList.add('review');
+        // 4. Stwórz nowy element HTML dla opinii
+        const newReview = document.createElement('div');
+        newReview.classList.add('review');
 
-            const today = new Date();
-            const dateString = today.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+        const today = new Date();
+        const dateString = today.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            newReview.innerHTML = `
-                <div class="rating">${stars}</div>
-                <p>${reviewText}</p>
-                <span class="review-author">${reviewerName}</span>, <span class="review-date">${dateString}</span>
-            `;
+        newReview.innerHTML = `
+            <div class="rating">${stars}</div>
+            <p>${reviewText}</p>
+            <span class="review-author">${reviewerName}</span>, <span class="review-date">${dateString}</span>
+        `;
 
-            // 5. Dodaj nową opinię na górze listy opinii
-            const reviewList = document.getElementById('review-list');
-            reviewList.prepend(newReview);
+        // 5. Dodaj nową opinię na górze listy opinii
+        const reviewList = document.getElementById('review-list');
+        reviewList.prepend(newReview);
 
-            // 6. Wyczyść formularz i poinformuj użytkownika
-            this.reset();
-            alert('Dziękujemy! Twoja opinia została dodana.');
-        });
-    </script>
-</body>
-</html>
+        // 6. Wyczyść formularz i poinformuj użytkownika
+        this.reset();
+        alert('Dziękujemy! Twoja opinia została dodana.');
+    });
+</script>
+</body> </html>
