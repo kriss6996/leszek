@@ -960,15 +960,15 @@ export default function App() {
   const joyRef = useRef<HTMLDivElement>(null);
   const joyIdRef = useRef<number | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
-  const JOY_R = 62;   // promień bazy
-  const KNOB_R = 26;  // promień gałki
+  const JOY_R = 43;   // promień bazy (o 30% mniejszy)
+  const KNOB_R = 18;  // promień gałki (o 30% mniejsza)
 
   const applyJoyVector = useCallback((dx: number, dy: number) => {
-    const max = JOY_R - KNOB_R + 8;
+    const max = JOY_R - KNOB_R + 6;
     const len = Math.hypot(dx, dy);
     const k = len > max ? max / len : 1;
     setKnob({ x: dx * k, y: dy * k });
-    if (len < 12) return; // martwa strefa
+    if (len < 8) return; // martwa strefa
     const s = stateRef.current;
     if (s.phase === 'levelwin') { advanceLevel(); return; }
     if (s.phase === 'idle' || s.phase === 'gameover') { startGame(); return; }
@@ -1049,30 +1049,30 @@ export default function App() {
         <div className="text-2xl">🩺</div>
       </div>
 
-      {/* Tabela wyników + ikony (dźwięk, podmiana obrazków) */}
+      {/* Tabela wyników (kompaktowa, o połowę niższa) + ikony obok (dźwięk, podmiana obrazków) */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="flex gap-5 bg-gray-900 rounded-xl px-4 py-2 shadow-inner border border-gray-700">
-          <div className="text-center">
-            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Wynik</div>
-            <div className="text-yellow-400 font-bold text-lg">{uiScore}</div>
+        <div className="flex items-center gap-4 bg-gray-900 rounded-xl px-3 py-1 shadow-inner border border-gray-700 leading-none">
+          <div className="flex items-baseline gap-1">
+            <span className="text-gray-400 text-[9px] uppercase tracking-widest">Wynik</span>
+            <span className="text-yellow-400 font-bold text-base">{uiScore}</span>
           </div>
-          <div className="text-center">
-            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Poziom</div>
-            <div className="text-green-400 font-bold text-lg">{uiLevel}</div>
-            <div className="text-gray-500 text-[9px] max-w-[80px] truncate">{LEVELS[(uiLevel - 1) % LEVELS.length]?.name}</div>
+          <div className="flex items-baseline gap-1" title={LEVELS[(uiLevel - 1) % LEVELS.length]?.name}>
+            <span className="text-gray-400 text-[9px] uppercase tracking-widest">Poziom</span>
+            <span className="text-green-400 font-bold text-base">{uiLevel}</span>
+            <span className="text-gray-500 text-[9px] max-w-[70px] truncate">{LEVELS[(uiLevel - 1) % LEVELS.length]?.name}</span>
           </div>
-          <div className="text-center">
-            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Życia</div>
-            <div className="text-red-400 font-bold text-lg">{'🩺'.repeat(Math.max(0, uiLives))}</div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-gray-400 text-[9px] uppercase tracking-widest">Życia</span>
+            <span className="text-red-400 font-bold text-base">{'🩺'.repeat(Math.max(0, uiLives))}</span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-1">
           <button
             aria-label={muted ? 'Włącz dźwięk' : 'Wycisz dźwięk'}
             title={muted ? 'Włącz dźwięk' : 'Wycisz dźwięk'}
             {...tapHandler(() => setMuted(m => !m))}
-            className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-600 text-lg flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
+            className="w-8 h-8 rounded-lg bg-gray-800 border border-gray-600 text-base flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
           >
             {muted ? '🔇' : '🔊'}
           </button>
@@ -1080,7 +1080,7 @@ export default function App() {
             aria-label="Podmień obrazki"
             title="Podmień obrazki (własne postacie)"
             {...tapHandler(() => setSkinPanel(v => !v))}
-            className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-600 text-lg flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
+            className="w-8 h-8 rounded-lg bg-gray-800 border border-gray-600 text-base flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
           >
             🖼️
           </button>
@@ -1207,10 +1207,6 @@ export default function App() {
           🔄<br />OD<br />NOWA
         </button>
       </div>
-
-      <p className="mt-2 text-gray-500 text-[11px] text-center px-4">
-        🕹️ Steruj padem • dotknij planszy, aby zacząć / przejść dalej
-      </p>
     </div>
   );
 }
