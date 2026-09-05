@@ -187,6 +187,27 @@
         }
         .submit-review-button:hover { background-color: #218838; }
 
+        /* --- Nazwa strony + przycisk do gry obok siebie --- */
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .game-button {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 999px;
+            background: #ec4899;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.95rem;
+            text-decoration: none;
+            white-space: nowrap;
+            box-shadow: 0 6px 18px rgba(236, 72, 153, .45);
+        }
+        .game-button:hover { background: #db2777; }
+
         /* --- MEDIA QUERY: poprawka cennika na telefony --- */
         @media (max-width: 768px) {
             .price-list li {
@@ -197,6 +218,18 @@
                 text-align: left;
                 margin-top: 5px;
             }
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .brand-row {
+                justify-content: space-between;
+            }
+            .game-button {
+                font-size: 0.85rem;
+                padding: 9px 16px;
+            }
         }
     </style>
 </head>
@@ -204,14 +237,12 @@
 <div class="container">
     <!-- ... (Reszta strony: header, profil, o mnie, adresy - bez zmian) ... -->
     <header>
-        <h1>TwójOtwór.pl</h1>
+        <div class="brand-row">
+            <h1>TwójOtwór.pl</h1>
+            <a class="game-button" href="gra.html">🕹️ Zagraj: DR. LESZEK PAC-MAN 69!</a>
+        </div>
         <input type="search" placeholder="Szukaj lekarza, specjalizacji...">
     </header>
-    <div style="text-align:center;margin:18px 0;">
-        <a href="gra.html" style="display:inline-block;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#facc15,#f59e0b);color:#111;font-weight:800;font-size:1.05rem;text-decoration:none;box-shadow:0 6px 18px rgba(245,158,11,.45);">
-            🕹️ Zagraj: DR. LESZEK PAC-MAN 69!
-        </a>
-    </div>
     
         <div class="profile-card">
 <video class="profile-photo" autoplay muted loop playsinline>
@@ -233,8 +264,8 @@
         </div>
         <section class="section" id="o-mnie">
             <h3>O mnie</h3>
-            <p> Nazywam się dr Leszek i od ponad dwóch dekad z zaangażowaniem i pasją zajmuję się proktologią. Choć wielu może się skrzywić na sam dźwięk tego słowa, ja uważam, że nie ma tematów tabu, jeśli chodzi o zdrowie. 
-Proktologia to dla mnie nie tylko specjalizacja medyczna – to misja i... moje niecodzienne hobby. Dlaczego? Bo wiem, że jakość życia zaczyna się tam, gdzie kończy się kręgosłup. 😉 
+            <p> Nazywam się dr Leszek i od ponad dwóch dekad z zaangażowaniem i pasją zajmuję się proktologią. Choć wielu może się skrzywić na sam dźwięk tego słowa, ja uważam, że nie ma tematów tabu, jeśli chodzi o zdrowie. 
+Proktologia to dla mnie nie tylko specjalizacja medyczna – to misja i... moje niecodzienne hobby. Dlaczego? Bo wiem, że jakość życia zaczyna się tam, gdzie kończy się kręgosłup. 😉 
 
 W codziennej pracy łączę precyzję chirurga z empatią i poczuciem humoru, które – jak sądzą moi pacjenci – potrafią rozładować nawet najtrudniejsze sytuacje. Stawiam na zrozumienie, dyskrecję i przede wszystkim skuteczne leczenie.
 
