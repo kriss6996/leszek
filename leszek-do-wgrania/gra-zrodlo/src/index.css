@@ -1,1 +1,40 @@
 @import "tailwindcss";
+
+/* Cała gra mieści się w WIDOCZNYM oknie Safari na iOS: bez przewijania
+   i bez "podbijania" strony palcem. Tło takie jak powłoka gry. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #030712;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Powłoka gry — wysokość widocznego okna przeglądarki:
+   - 100dvh dynamicznie śledzi pasek dolny Safari (zwijanie/rozwijanie),
+   - env(safe-area-inset-bottom) odpuszcza pasek Home na iPhone'ach z notchem
+     (wymaga viewport-fit=cover w <meta viewport>),
+   - fallback 100vh dla przeglądarek bez obsługi dvh. */
+.game-shell {
+  height: 100vh;
+  height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Panel podmiany obrazków: gdy jest otwarty, nie wypycha sterowania poza
+   ekran — zwija się do połowy widocznego okna i przewija wewnętrznie. */
+.skin-panel {
+  max-height: 45vh;
+  max-height: 45dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
