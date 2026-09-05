@@ -93,6 +93,53 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+// --- GRAFIKI Z PLIKÓW LEŻĄCYCH OBOK gra.html (katalog images/) ---
+// Wygląd gry można podmienić BEZ przebudowywania gra.html: wystarczy wgrać lub
+// nadpisać plik w katalogu images/ obok gra.html (na GitHubie: Add file → Upload files).
+// Ścieżki są WZGLĘDNE, więc działają także wtedy, gdy gra.html leży w podkatalogu
+// (np. https://kriss6996.github.io/leszek/gra.html).
+// Instrukcja podmiany: images/README.md w katalogu głównym repozytorium.
+type SkinSlot = keyof Skins;
+
+const IMAGE_FILES: Record<SkinSlot, string> = {
+  pacRight: 'images/pac_right.png',
+  pacLeft: 'images/pac_left.png',
+  ghost0: 'images/ghost1.png',
+  ghost1: 'images/ghost2.png',
+  ghost2: 'images/ghost3.png',
+  ghost3: 'images/ghost4.png',
+};
+const IMAGE_SLOTS = Object.keys(IMAGE_FILES) as SkinSlot[];
+const GHOST_SLOT_INDEX: Partial<Record<SkinSlot, number>> = { ghost0: 0, ghost1: 1, ghost2: 2, ghost3: 3 };
+
+// ?v=<timestamp> omija cache przeglądarki: po podmianie pliku w repozytorium
+// wystarczy odświeżyć stronę — nie trzeba czyścić cache.
+function assetUrl(relPath: string, version: number): string {
+  return `${relPath}?v=${version}`;
+}
+
+// Wczytuje obrazek z pliku obok gra.html. Brak pliku (404) albo uszkodzony plik
+// zwraca null, czyli "po cichu" zostaje dotychczasowa grafika: bez wyrzucanych
+// błędów i bez pustych kwadratów na planszy.
+function loadFileImage(relPath: string, version: number): Promise<HTMLImageElement | null> {
+  return new Promise(resolve => {
+    try {
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => resolve(im.naturalWidth > 0 ? im : null);
+      im.onerror = () => resolve(null);
+      im.src = assetUrl(relPath, version);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+// Zwraca obrazek tylko wtedy, gdy jest naprawdę wczytany (inaczej null).
+function usableImg(im: HTMLImageElement | null | undefined): HTMLImageElement | null {
+  return im && im.complete && im.naturalWidth > 0 ? im : null;
+}
+
 // --- GAME CONSTANTS ---
 const TILE = 20;
 const COLS = 28;
@@ -448,6 +495,36 @@ export default function App() {
   const customPacLeftRef = useRef<HTMLImageElement | null>(null);
   const customGhostRefs = useRef<(HTMLImageElement | null)[]>([null, null, null, null]);
 
+  // Grafiki z plików obok gra.html (katalog images/) — priorytet niżej niż
+  // obrazki wgrane przez użytkownika, wyżej niż wbudowane domyślne.
+  const filePacRightRef = useRef<HTMLImageElement | null>(null);
+  const filePacLeftRef = useRef<HTMLImageElement | null>(null);
+  const fileGhostRefs = useRef<(HTMLImageElement | null)[]>([null, null, null, null]);
+  const [fileSkinSrcs, setFileSkinSrcs] = useState<Partial<Record<SkinSlot, string>>>({});
+  const [fileVersion, setFileVersion] = useState(() => Date.now());
+
+  // Przy starcie gry próbujemy wczytać grafiki z images/. Brak pliku (404) nie jest
+  // błędem — po cichu zostaje grafika domyślna (albo wgrana przez użytkownika).
+  useEffect(() => {
+    let alive = true;
+    void Promise.all(IMAGE_SLOTS.map(slot => loadFileImage(IMAGE_FILES[slot], fileVersion))).then(imgs => {
+      if (!alive) return;
+      const found: Partial<Record<SkinSlot, string>> = {};
+      IMAGE_SLOTS.forEach((slot, i) => {
+        const im = imgs[i];
+        if (slot === 'pacRight') filePacRightRef.current = im;
+        else if (slot === 'pacLeft') filePacLeftRef.current = im;
+        else {
+          const gi = GHOST_SLOT_INDEX[slot];
+          if (gi !== undefined) fileGhostRefs.current[gi] = im;
+        }
+        if (im) found[slot] = im.src;
+      });
+      setFileSkinSrcs(found);
+    });
+    return () => { alive = false; };
+  }, [fileVersion]);
+
   useEffect(() => {
     saveSkins(skins);
     const mk = (src?: string) => {
@@ -701,10 +778,10 @@ export default function App() {
       const r = TILE / 2 - 1;
 
       const facing = pacFacingRef.current; // 1 = prawo, -1 = lewo
-      const ok = (im: HTMLImageElement | null) => (im && im.complete && im.naturalWidth > 0 ? im : null);
-      const right = ok(customPacRightRef.current);
-      const left = ok(customPacLeftRef.current);
-      const fallback = imgLoadedRef.current ? ok(drLeszekImg.current) : null;
+      // Priorytet: obrazki wgrane przez użytkownika > pliki z images/ > wbudowane.
+      const right = usableImg(customPacRightRef.current) ?? usableImg(filePacRightRef.current);
+      const left = usableImg(customPacLeftRef.current) ?? usableImg(filePacLeftRef.current);
+      const fallback = imgLoadedRef.current ? usableImg(drLeszekImg.current) : null;
 
       // Wybór obrazka wg kierunku; jeśli brakuje wersji "w lewo", robimy lustrzane odbicie.
       let img: HTMLImageElement | null = null;
@@ -765,9 +842,9 @@ export default function App() {
       const lv = LEVELS[s.levelIndex] ?? LEVELS[0];
       drawMaze(ctx, s.maze, s.animFrame, lv.wallFill, lv.wallStroke);
 
-      // Draw ghosts
+      // Draw ghosts (własny obrazek z 🖼️ > plik z images/ > domyślny duszek)
       for (let gi = 0; gi < s.ghosts.length; gi++) {
-        drawGhost(ctx, s.ghosts[gi], s.frightenedTimer, customGhostRefs.current[gi]);
+        drawGhost(ctx, s.ghosts[gi], s.frightenedTimer, usableImg(customGhostRefs.current[gi]) ?? usableImg(fileGhostRefs.current[gi]));
       }
 
       // Draw pacman
@@ -1015,18 +1092,35 @@ export default function App() {
         <div className="mb-2 w-full max-w-[520px] bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-yellow-400 font-bold">🖼️ Własne obrazki</span>
-            <button className="text-gray-400 px-2" {...tapHandler(() => setSkinPanel(false))}>✕</button>
+            <div className="flex items-center gap-2">
+              <button
+                className="text-green-400 text-xs underline"
+                title="Wczytaj ponownie pliki z katalogu images/ (bez odświeżania strony)"
+                {...tapHandler(() => setFileVersion(Date.now()))}
+              >
+                ⟳ sprawdź images/
+              </button>
+              <button className="text-gray-400 px-2" {...tapHandler(() => setSkinPanel(false))}>✕</button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {skinSlots.map(slot => (
+            {skinSlots.map(slot => {
+              const previewSrc = skins[slot.key] ?? fileSkinSrcs[slot.key];
+              const sourceLabel = skins[slot.key]
+                ? '👤 Twoje (zapisane w przeglądarce)'
+                : fileSkinSrcs[slot.key]
+                  ? `📁 plik ${IMAGE_FILES[slot.key]}`
+                  : '✨ grafika domyślna';
+              return (
               <div key={slot.key} className="flex items-center gap-2 bg-gray-950 rounded-lg px-2 py-1.5 border border-gray-800">
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-800 shrink-0 flex items-center justify-center">
-                  {skins[slot.key]
-                    ? <img src={skins[slot.key]} alt="" className="w-full h-full object-cover" />
+                  {previewSrc
+                    ? <img src={previewSrc} alt="" className="w-full h-full object-cover" />
                     : <span className="text-gray-600 text-xs">—</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-gray-300 text-xs truncate">{slot.label}</div>
+                  <div className="text-gray-500 text-[10px] truncate" title={sourceLabel}>{sourceLabel}</div>
                   <div className="flex gap-2">
                     <label className="text-yellow-400 text-xs underline cursor-pointer">
                       wybierz
@@ -1043,9 +1137,10 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
-          <p className="text-gray-500 text-[11px] mt-2">Dla gracza wybierz DWA zdjęcia: „w prawo" i „w lewo". Jeśli wgrasz tylko jedno, drugi kierunek będzie lustrzanym odbiciem. Obrazki zapisują się w Twojej przeglądarce.</p>
+          <p className="text-gray-500 text-[11px] mt-2">Priorytet grafik: 1) Twoje wgrane tutaj (zapisują się w przeglądarce), 2) pliki z katalogu <code>images/</code> obok gra.html (pac_right.png, pac_left.png, ghost1–ghost4.png — szczegóły w images/README.md w repozytorium), 3) grafika domyślna. Dla gracza wystarczą DWA zdjęcia („w prawo” i „w lewo”); jeśli wgrasz tylko jedno, drugi kierunek będzie jego lustrzanym odbiciem.</p>
         </div>
       )}
 
