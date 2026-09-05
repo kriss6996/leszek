@@ -62,7 +62,7 @@ const sfx = new Sfx();
 
 // --- WŁASNE OBRAZKI (zapisywane w przeglądarce) ---
 const SKIN_KEY = 'leszek-pacman-skins-v1';
-type Skins = { pac?: string; ghost0?: string; ghost1?: string; ghost2?: string; ghost3?: string };
+type Skins = { pacRight?: string; pacLeft?: string; ghost0?: string; ghost1?: string; ghost2?: string; ghost3?: string };
 
 function loadSkins(): Skins {
   try { return JSON.parse(localStorage.getItem(SKIN_KEY) || '{}') as Skins; } catch { return {}; }
@@ -282,7 +282,7 @@ function ghostSpeedInterval(level: number): number {
 }
 
 function frightenedDuration(level: number): number {
-  return Math.max(120, 460 - 60 * level);
+  return Math.round(Math.max(120, 460 - 60 * level) * 1.25);
 }
 
 // --- DRAW HELPERS ---
@@ -427,6 +427,9 @@ export default function App() {
   const [, setUiPhase] = useState<string>('idle');
   const [uiLevel, setUiLevel] = useState(1);
   const tickRef = useRef(0);
+  const pacAccRef = useRef(0);
+  const ghostAccRef = useRef(0);
+  const pacFacingRef = useRef(1); // 1 = w prawo, -1 = w lewo
   const ghostEatComboRef = useRef(0);
 
   // Dźwięk
@@ -441,7 +444,8 @@ export default function App() {
   // Własne obrazki
   const [skins, setSkins] = useState<Skins>(() => loadSkins());
   const [skinPanel, setSkinPanel] = useState(false);
-  const customPacRef = useRef<HTMLImageElement | null>(null);
+  const customPacRightRef = useRef<HTMLImageElement | null>(null);
+  const customPacLeftRef = useRef<HTMLImageElement | null>(null);
   const customGhostRefs = useRef<(HTMLImageElement | null)[]>([null, null, null, null]);
 
   useEffect(() => {
@@ -452,7 +456,8 @@ export default function App() {
       im.src = src;
       return im;
     };
-    customPacRef.current = mk(skins.pac);
+    customPacRightRef.current = mk(skins.pacRight);
+    customPacLeftRef.current = mk(skins.pacLeft);
     customGhostRefs.current = [mk(skins.ghost0), mk(skins.ghost1), mk(skins.ghost2), mk(skins.ghost3)];
   }, [skins]);
 
@@ -483,6 +488,7 @@ export default function App() {
     s.floatingTexts.push({ x: 13, y: 6, text: `POZIOM 1 • ${LEVELS[0].name}`, life: 130, id: s.nextFloatingId++ });
     stateRef.current = s;
     ghostEatComboRef.current = 0;
+    pacAccRef.current = 0; ghostAccRef.current = 0; pacFacingRef.current = 1;
     sfx.unlock();
     sfx.play('start');
     setUiScore(0); setUiLives(3); setUiPhase('playing'); setUiLevel(1);
@@ -534,17 +540,16 @@ export default function App() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
 
-    const PAC_SPEED_INTERVAL = 6;
+    // Gra spowolniona o 20% => odstępy między krokami x1.25
+    const SLOWDOWN = 1.25;
+    const PAC_SPEED_INTERVAL = 6 * SLOWDOWN;
 
     function update() {
       const s = stateRef.current;
       tickRef.current++;
       s.animFrame++;
 
-      // Mouth animation
-      s.mouthAngle += s.mouthDir * 0.04;
-      if (s.mouthAngle >= 0.4) s.mouthDir = -1;
-      if (s.mouthAngle <= 0.02) s.mouthDir = 1;
+      // Postać gracza nie jest animowana — brak animacji "pyszczka".
 
       // Floating texts
       s.floatingTexts = s.floatingTexts
@@ -554,13 +559,17 @@ export default function App() {
       if (s.phase !== 'playing') return;
 
       // PAC movement
-      if (tickRef.current % PAC_SPEED_INTERVAL === 0) {
+      pacAccRef.current += 1;
+      if (pacAccRef.current >= PAC_SPEED_INTERVAL) {
+        pacAccRef.current -= PAC_SPEED_INTERVAL;
         // Try next direction
         const nx = s.pacX + s.nextDir.x;
         const ny = s.pacY + s.nextDir.y;
         if (!isWall(s.maze, nx, ny)) {
           s.pacDir = { ...s.nextDir };
         }
+        if (s.pacDir.x === 1) pacFacingRef.current = 1;
+        else if (s.pacDir.x === -1) pacFacingRef.current = -1;
         // Move in current direction
         const mx = s.pacX + s.pacDir.x;
         const my = s.pacY + s.pacDir.y;
@@ -606,7 +615,10 @@ export default function App() {
       }
 
       // GHOST movement (szybkość rośnie z poziomem)
-      if (tickRef.current % ghostSpeedInterval(s.level) === 0) {
+      ghostAccRef.current += 1;
+      const ghostInterval = ghostSpeedInterval(s.level) * SLOWDOWN;
+      if (ghostAccRef.current >= ghostInterval) {
+        ghostAccRef.current -= ghostInterval;
         for (let i = 0; i < s.ghosts.length; i++) {
           const g = s.ghosts[i];
 
@@ -688,64 +700,55 @@ export default function App() {
       const cy = s.pacY * TILE + TILE / 2;
       const r = TILE / 2 - 1;
 
-      const custom = customPacRef.current;
-      const useImg = custom && custom.complete && custom.naturalWidth > 0 ? custom : (imgLoadedRef.current ? drLeszekImg.current : null);
+      const facing = pacFacingRef.current; // 1 = prawo, -1 = lewo
+      const ok = (im: HTMLImageElement | null) => (im && im.complete && im.naturalWidth > 0 ? im : null);
+      const right = ok(customPacRightRef.current);
+      const left = ok(customPacLeftRef.current);
+      const fallback = imgLoadedRef.current ? ok(drLeszekImg.current) : null;
 
-      if (useImg) {
-        // Draw dr Leszek image clipped in a circle with mouth effect
+      // Wybór obrazka wg kierunku; jeśli brakuje wersji "w lewo", robimy lustrzane odbicie.
+      let img: HTMLImageElement | null = null;
+      let mirror = false;
+      if (facing === -1) {
+        if (left) { img = left; }
+        else if (right) { img = right; mirror = true; }
+        else if (fallback) { img = fallback; mirror = true; }
+      } else {
+        if (right) { img = right; }
+        else if (left) { img = left; mirror = true; }
+        else if (fallback) { img = fallback; }
+      }
+
+      if (img) {
+        const size = (r + 2) * 2;
         ctx.save();
         ctx.translate(cx, cy);
-
-        // Rotate based on direction
-        let angle = 0;
-        if (s.pacDir.x === 1) angle = 0;
-        else if (s.pacDir.x === -1) angle = Math.PI;
-        else if (s.pacDir.y === -1) angle = -Math.PI / 2;
-        else if (s.pacDir.y === 1) angle = Math.PI / 2;
-        ctx.rotate(angle);
-
-        // Clip to pacman mouth shape
-        const mouth = s.mouthAngle * Math.PI;
+        if (mirror) ctx.scale(-1, 1);
+        // Statyczny obrazek postaci w kółku (bez animacji, bez obrotu).
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, r + 2, mouth, Math.PI * 2 - mouth);
+        ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
-
-        // Draw image
-        ctx.drawImage(useImg, -r - 2, -r - 2, (r + 2) * 2, (r + 2) * 2);
+        ctx.drawImage(img, -r - 2, -r - 2, size, size);
         ctx.restore();
 
-        // Rainbow hat hint
+        // Złota obwódka
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(angle);
         ctx.beginPath();
-        ctx.arc(0, 0, r + 2, mouth, Math.PI * 2 - mouth);
-        ctx.closePath();
+        ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
         ctx.strokeStyle = '#FFD700';
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
       } else {
-        // Fallback: classic yellow pacman
+        // Fallback: statyczne żółte kółko z napisem
         ctx.save();
         ctx.translate(cx, cy);
-        let angle = 0;
-        if (s.pacDir.x === 1) angle = 0;
-        else if (s.pacDir.x === -1) angle = Math.PI;
-        else if (s.pacDir.y === -1) angle = -Math.PI / 2;
-        else if (s.pacDir.y === 1) angle = Math.PI / 2;
-        ctx.rotate(angle);
-        const mouth = s.mouthAngle * Math.PI;
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, r, mouth, Math.PI * 2 - mouth);
-        ctx.closePath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
-        // "DR.L" text
-        ctx.rotate(-angle);
         ctx.fillStyle = '#000';
         ctx.font = `bold 5px Arial`;
         ctx.textAlign = 'center';
@@ -942,7 +945,8 @@ export default function App() {
   });
 
   const skinSlots: { key: keyof Skins; label: string }[] = [
-    { key: 'pac', label: 'Dr. Leszek (gracz)' },
+    { key: 'pacRight', label: 'Gracz — w prawo ▶' },
+    { key: 'pacLeft', label: 'Gracz — w lewo ◀' },
     { key: 'ghost0', label: 'Duch 1 (czerwony)' },
     { key: 'ghost1', label: 'Duch 2 (różowy)' },
     { key: 'ghost2', label: 'Duch 3 (błękitny)' },
@@ -1041,7 +1045,7 @@ export default function App() {
               </div>
             ))}
           </div>
-          <p className="text-gray-500 text-[11px] mt-2">Obrazki zapisują się w Twojej przeglądarce (tylko u Ciebie).</p>
+          <p className="text-gray-500 text-[11px] mt-2">Dla gracza wybierz DWA zdjęcia: „w prawo" i „w lewo". Jeśli wgrasz tylko jedno, drugi kierunek będzie lustrzanym odbiciem. Obrazki zapisują się w Twojej przeglądarce.</p>
         </div>
       )}
 
