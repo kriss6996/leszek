@@ -1,6 +1,98 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { LEVELS, countDots, HOUSE_EXIT, HOUSE_CENTER } from './game/levels';
 
+// --- DŹWIĘK (WebAudio, bez plików) ---
+type SfxName = 'dot' | 'power' | 'ghost' | 'death' | 'win' | 'start';
+
+class Sfx {
+  private ctx: AudioContext | null = null;
+  muted = false;
+
+  private ensure(): AudioContext | null {
+    if (this.muted) return null;
+    if (!this.ctx) {
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return null;
+      this.ctx = new AC();
+    }
+    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    return this.ctx;
+  }
+
+  private beep(freq: number, dur: number, type: OscillatorType, gain: number, delay = 0, freqTo?: number) {
+    const ctx = this.ensure();
+    if (!ctx) return;
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (freqTo !== undefined) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqTo), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+
+  play(name: SfxName) {
+    if (this.muted) return;
+    switch (name) {
+      case 'dot': this.beep(520, 0.06, 'square', 0.05); break;
+      case 'power': this.beep(220, 0.28, 'sawtooth', 0.07, 0, 880); break;
+      case 'ghost': this.beep(700, 0.12, 'square', 0.08, 0, 1400); break;
+      case 'death':
+        this.beep(500, 0.18, 'sawtooth', 0.09, 0, 120);
+        this.beep(300, 0.25, 'sawtooth', 0.08, 0.18, 60);
+        break;
+      case 'win':
+        [523, 659, 784, 1047].forEach((f, i) => this.beep(f, 0.14, 'triangle', 0.08, i * 0.12));
+        break;
+      case 'start':
+        [392, 523, 659].forEach((f, i) => this.beep(f, 0.12, 'triangle', 0.08, i * 0.1));
+        break;
+    }
+  }
+
+  unlock() { this.ensure(); }
+}
+
+const sfx = new Sfx();
+
+// --- WŁASNE OBRAZKI (zapisywane w przeglądarce) ---
+const SKIN_KEY = 'leszek-pacman-skins-v1';
+type Skins = { pacRight?: string; pacLeft?: string; ghost0?: string; ghost1?: string; ghost2?: string; ghost3?: string };
+
+function loadSkins(): Skins {
+  try { return JSON.parse(localStorage.getItem(SKIN_KEY) || '{}') as Skins; } catch { return {}; }
+}
+function saveSkins(s: Skins) {
+  try { localStorage.setItem(SKIN_KEY, JSON.stringify(s)); } catch { /* np. przepełniony storage */ }
+}
+// Zmniejsza wybrany plik do kwadratu 96x96 (żeby zmieścił się w localStorage).
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('read error'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 96;
+        const c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        const cx = c.getContext('2d')!;
+        const side = Math.min(img.width, img.height);
+        cx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+        resolve(c.toDataURL('image/png'));
+      };
+      img.onerror = () => reject(new Error('img error'));
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // --- GAME CONSTANTS ---
 const TILE = 20;
 const COLS = 28;
@@ -190,7 +282,7 @@ function ghostSpeedInterval(level: number): number {
 }
 
 function frightenedDuration(level: number): number {
-  return Math.max(120, 460 - 60 * level);
+  return Math.round(Math.max(120, 460 - 60 * level) * 1.25);
 }
 
 // --- DRAW HELPERS ---
@@ -252,13 +344,25 @@ function drawMaze(ctx: CanvasRenderingContext2D, maze: number[][], animFrame: nu
   }
 }
 
-function drawGhost(ctx: CanvasRenderingContext2D, ghost: Ghost, frightenedTimer: number) {
+function drawGhost(ctx: CanvasRenderingContext2D, ghost: Ghost, frightenedTimer: number, customImg?: HTMLImageElement | null) {
   const cx = ghost.x * TILE + TILE / 2;
   const cy = ghost.y * TILE + TILE / 2;
   const r = TILE / 2 - 1;
 
   ctx.save();
   ctx.translate(cx, cy);
+
+  // Własny obrazek gracza zamiast domyślnego ducha (poza trybem "zjedzony").
+  if (customImg && customImg.complete && customImg.naturalWidth > 0 && ghost.mode !== 'eaten') {
+    if (ghost.mode === 'frightened') ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 1, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(customImg, -r - 1, -r - 1, (r + 1) * 2, (r + 1) * 2);
+    ctx.restore();
+    return;
+  }
 
   if (ghost.mode === 'frightened') {
     const flash = frightenedTimer < 120 && Math.floor(frightenedTimer / 20) % 2 === 0;
@@ -320,10 +424,54 @@ export default function App() {
   const imgLoadedRef = useRef(false);
   const [uiScore, setUiScore] = useState(0);
   const [uiLives, setUiLives] = useState(3);
-  const [uiPhase, setUiPhase] = useState<string>('idle');
+  const [, setUiPhase] = useState<string>('idle');
   const [uiLevel, setUiLevel] = useState(1);
   const tickRef = useRef(0);
+  const pacAccRef = useRef(0);
+  const ghostAccRef = useRef(0);
+  const pacFacingRef = useRef(1); // 1 = w prawo, -1 = w lewo
   const ghostEatComboRef = useRef(0);
+
+  // Dźwięk
+  const [muted, setMuted] = useState<boolean>(() => {
+    try { return localStorage.getItem('leszek-pacman-muted') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    sfx.muted = muted;
+    try { localStorage.setItem('leszek-pacman-muted', muted ? '1' : '0'); } catch { /* ignore */ }
+  }, [muted]);
+
+  // Własne obrazki
+  const [skins, setSkins] = useState<Skins>(() => loadSkins());
+  const [skinPanel, setSkinPanel] = useState(false);
+  const customPacRightRef = useRef<HTMLImageElement | null>(null);
+  const customPacLeftRef = useRef<HTMLImageElement | null>(null);
+  const customGhostRefs = useRef<(HTMLImageElement | null)[]>([null, null, null, null]);
+
+  useEffect(() => {
+    saveSkins(skins);
+    const mk = (src?: string) => {
+      if (!src) return null;
+      const im = new Image();
+      im.src = src;
+      return im;
+    };
+    customPacRightRef.current = mk(skins.pacRight);
+    customPacLeftRef.current = mk(skins.pacLeft);
+    customGhostRefs.current = [mk(skins.ghost0), mk(skins.ghost1), mk(skins.ghost2), mk(skins.ghost3)];
+  }, [skins]);
+
+  const setSkin = useCallback(async (key: keyof Skins, file: File | null) => {
+    if (!file) return;
+    try {
+      const url = await fileToDataUrl(file);
+      setSkins(prev => ({ ...prev, [key]: url }));
+    } catch { /* nieprawidłowy plik */ }
+  }, []);
+
+  const clearSkin = useCallback((key: keyof Skins) => {
+    setSkins(prev => { const n = { ...prev }; delete n[key]; return n; });
+  }, []);
 
   // Load dr Leszek image
   useEffect(() => {
@@ -340,6 +488,9 @@ export default function App() {
     s.floatingTexts.push({ x: 13, y: 6, text: `POZIOM 1 • ${LEVELS[0].name}`, life: 130, id: s.nextFloatingId++ });
     stateRef.current = s;
     ghostEatComboRef.current = 0;
+    pacAccRef.current = 0; ghostAccRef.current = 0; pacFacingRef.current = 1;
+    sfx.unlock();
+    sfx.play('start');
     setUiScore(0); setUiLives(3); setUiPhase('playing'); setUiLevel(1);
   }, []);
 
@@ -355,6 +506,7 @@ export default function App() {
     }
     stateRef.current = s;
     ghostEatComboRef.current = 0;
+    sfx.play('start');
     setUiScore(s.score); setUiLives(s.lives); setUiPhase('playing'); setUiLevel(s.level);
   }, []);
 
@@ -388,17 +540,16 @@ export default function App() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
 
-    const PAC_SPEED_INTERVAL = 6;
+    // Gra spowolniona o 20% => odstępy między krokami x1.25
+    const SLOWDOWN = 1.25;
+    const PAC_SPEED_INTERVAL = 6 * SLOWDOWN;
 
     function update() {
       const s = stateRef.current;
       tickRef.current++;
       s.animFrame++;
 
-      // Mouth animation
-      s.mouthAngle += s.mouthDir * 0.04;
-      if (s.mouthAngle >= 0.4) s.mouthDir = -1;
-      if (s.mouthAngle <= 0.02) s.mouthDir = 1;
+      // Postać gracza nie jest animowana — brak animacji "pyszczka".
 
       // Floating texts
       s.floatingTexts = s.floatingTexts
@@ -408,13 +559,17 @@ export default function App() {
       if (s.phase !== 'playing') return;
 
       // PAC movement
-      if (tickRef.current % PAC_SPEED_INTERVAL === 0) {
+      pacAccRef.current += 1;
+      if (pacAccRef.current >= PAC_SPEED_INTERVAL) {
+        pacAccRef.current -= PAC_SPEED_INTERVAL;
         // Try next direction
         const nx = s.pacX + s.nextDir.x;
         const ny = s.pacY + s.nextDir.y;
         if (!isWall(s.maze, nx, ny)) {
           s.pacDir = { ...s.nextDir };
         }
+        if (s.pacDir.x === 1) pacFacingRef.current = 1;
+        else if (s.pacDir.x === -1) pacFacingRef.current = -1;
         // Move in current direction
         const mx = s.pacX + s.pacDir.x;
         const my = s.pacY + s.pacDir.y;
@@ -431,6 +586,7 @@ export default function App() {
           s.score += 10;
           s.dotsLeft--;
           s.floatingTexts.push({ x: s.pacX, y: s.pacY, text: '+10', life: 40, id: s.nextFloatingId++ });
+          sfx.play('dot');
         } else if (cell === 3) {
           s.maze[s.pacY][s.pacX] = 2;
           s.score += 50;
@@ -439,10 +595,12 @@ export default function App() {
           ghostEatComboRef.current = 0;
           s.ghosts.forEach(g => { if (g.mode !== 'eaten') g.mode = 'frightened'; });
           s.floatingTexts.push({ x: s.pacX, y: s.pacY, text: '⚡ POWER!', life: 60, id: s.nextFloatingId++ });
+          sfx.play('power');
         }
 
         if (s.dotsLeft <= 0) {
           s.phase = 'levelwin';
+          sfx.play('win');
           setUiPhase('levelwin');
           return;
         }
@@ -457,7 +615,10 @@ export default function App() {
       }
 
       // GHOST movement (szybkość rośnie z poziomem)
-      if (tickRef.current % ghostSpeedInterval(s.level) === 0) {
+      ghostAccRef.current += 1;
+      const ghostInterval = ghostSpeedInterval(s.level) * SLOWDOWN;
+      if (ghostAccRef.current >= ghostInterval) {
+        ghostAccRef.current -= ghostInterval;
         for (let i = 0; i < s.ghosts.length; i++) {
           const g = s.ghosts[i];
 
@@ -505,9 +666,11 @@ export default function App() {
               const pts = 200 * Math.pow(2, ghostEatComboRef.current - 1);
               s.score += pts;
               s.floatingTexts.push({ x: g.x, y: g.y, text: `+${pts} 🩺`, life: 60, id: s.nextFloatingId++ });
+              sfx.play('ghost');
             } else if (g.mode !== 'eaten') {
               s.lives--;
               s.phase = 'dying';
+              sfx.play('death');
               setUiLives(s.lives);
               setUiPhase('dying');
               setTimeout(() => {
@@ -537,61 +700,55 @@ export default function App() {
       const cy = s.pacY * TILE + TILE / 2;
       const r = TILE / 2 - 1;
 
-      if (drLeszekImg.current && imgLoadedRef.current) {
-        // Draw dr Leszek image clipped in a circle with mouth effect
+      const facing = pacFacingRef.current; // 1 = prawo, -1 = lewo
+      const ok = (im: HTMLImageElement | null) => (im && im.complete && im.naturalWidth > 0 ? im : null);
+      const right = ok(customPacRightRef.current);
+      const left = ok(customPacLeftRef.current);
+      const fallback = imgLoadedRef.current ? ok(drLeszekImg.current) : null;
+
+      // Wybór obrazka wg kierunku; jeśli brakuje wersji "w lewo", robimy lustrzane odbicie.
+      let img: HTMLImageElement | null = null;
+      let mirror = false;
+      if (facing === -1) {
+        if (left) { img = left; }
+        else if (right) { img = right; mirror = true; }
+        else if (fallback) { img = fallback; mirror = true; }
+      } else {
+        if (right) { img = right; }
+        else if (left) { img = left; mirror = true; }
+        else if (fallback) { img = fallback; }
+      }
+
+      if (img) {
+        const size = (r + 2) * 2;
         ctx.save();
         ctx.translate(cx, cy);
-
-        // Rotate based on direction
-        let angle = 0;
-        if (s.pacDir.x === 1) angle = 0;
-        else if (s.pacDir.x === -1) angle = Math.PI;
-        else if (s.pacDir.y === -1) angle = -Math.PI / 2;
-        else if (s.pacDir.y === 1) angle = Math.PI / 2;
-        ctx.rotate(angle);
-
-        // Clip to pacman mouth shape
-        const mouth = s.mouthAngle * Math.PI;
+        if (mirror) ctx.scale(-1, 1);
+        // Statyczny obrazek postaci w kółku (bez animacji, bez obrotu).
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, r + 2, mouth, Math.PI * 2 - mouth);
+        ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
-
-        // Draw image
-        ctx.drawImage(drLeszekImg.current, -r - 2, -r - 2, (r + 2) * 2, (r + 2) * 2);
+        ctx.drawImage(img, -r - 2, -r - 2, size, size);
         ctx.restore();
 
-        // Rainbow hat hint
+        // Złota obwódka
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(angle);
         ctx.beginPath();
-        ctx.arc(0, 0, r + 2, mouth, Math.PI * 2 - mouth);
-        ctx.closePath();
+        ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
         ctx.strokeStyle = '#FFD700';
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
       } else {
-        // Fallback: classic yellow pacman
+        // Fallback: statyczne żółte kółko z napisem
         ctx.save();
         ctx.translate(cx, cy);
-        let angle = 0;
-        if (s.pacDir.x === 1) angle = 0;
-        else if (s.pacDir.x === -1) angle = Math.PI;
-        else if (s.pacDir.y === -1) angle = -Math.PI / 2;
-        else if (s.pacDir.y === 1) angle = Math.PI / 2;
-        ctx.rotate(angle);
-        const mouth = s.mouthAngle * Math.PI;
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, r, mouth, Math.PI * 2 - mouth);
-        ctx.closePath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
-        // "DR.L" text
-        ctx.rotate(-angle);
         ctx.fillStyle = '#000';
         ctx.font = `bold 5px Arial`;
         ctx.textAlign = 'center';
@@ -609,8 +766,8 @@ export default function App() {
       drawMaze(ctx, s.maze, s.animFrame, lv.wallFill, lv.wallStroke);
 
       // Draw ghosts
-      for (const g of s.ghosts) {
-        drawGhost(ctx, g, s.frightenedTimer);
+      for (let gi = 0; gi < s.ghosts.length; gi++) {
+        drawGhost(ctx, s.ghosts[gi], s.frightenedTimer, customGhostRefs.current[gi]);
       }
 
       // Draw pacman
@@ -722,7 +879,52 @@ export default function App() {
     }
   };
 
-  const dirBtnStyle = "w-16 h-16 rounded-full bg-yellow-400 text-black font-bold text-2xl flex items-center justify-center active:bg-yellow-200 active:scale-95 transition-transform select-none touch-none shadow-lg";
+  // --- JOYSTICK (pad analogowy) ---
+  const joyRef = useRef<HTMLDivElement>(null);
+  const joyIdRef = useRef<number | null>(null);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const JOY_R = 62;   // promień bazy
+  const KNOB_R = 26;  // promień gałki
+
+  const applyJoyVector = useCallback((dx: number, dy: number) => {
+    const max = JOY_R - KNOB_R + 8;
+    const len = Math.hypot(dx, dy);
+    const k = len > max ? max / len : 1;
+    setKnob({ x: dx * k, y: dy * k });
+    if (len < 12) return; // martwa strefa
+    const s = stateRef.current;
+    if (s.phase === 'levelwin') { advanceLevel(); return; }
+    if (s.phase === 'idle' || s.phase === 'gameover') { startGame(); return; }
+    if (Math.abs(dx) > Math.abs(dy)) s.nextDir = dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 };
+    else s.nextDir = dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 };
+  }, [advanceLevel, startGame]);
+
+  const joyFromEvent = (e: React.PointerEvent) => {
+    const el = joyRef.current;
+    if (!el) return { dx: 0, dy: 0 };
+    const r = el.getBoundingClientRect();
+    return { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+  };
+
+  const onJoyDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    sfx.unlock();
+    joyIdRef.current = e.pointerId;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const { dx, dy } = joyFromEvent(e);
+    applyJoyVector(dx, dy);
+  };
+  const onJoyMove = (e: React.PointerEvent) => {
+    if (joyIdRef.current !== e.pointerId) return;
+    e.preventDefault();
+    const { dx, dy } = joyFromEvent(e);
+    applyJoyVector(dx, dy);
+  };
+  const onJoyUp = (e: React.PointerEvent) => {
+    if (joyIdRef.current !== e.pointerId) return;
+    joyIdRef.current = null;
+    setKnob({ x: 0, y: 0 });
+  };
 
   // Pominięcie poziomu w trakcie gry (ekranowy odpowiednik dawnego klawisza).
   const skipLevel = useCallback(() => {
@@ -730,7 +932,7 @@ export default function App() {
     advanceLevel();
   }, [advanceLevel]);
 
-  // Duży przycisk akcji: start / następny poziom / zagraj ponownie.
+  // Akcja kontekstowa (start / następny poziom / restart) — używana przy dotknięciu planszy.
   const handleAction = useCallback(() => {
     const p = stateRef.current.phase;
     if (p === 'levelwin') advanceLevel();
@@ -739,47 +941,113 @@ export default function App() {
 
   // Obsługa dotyku/kliknięcia bez podwójnego wyzwolenia i bez przenoszenia gestu na planszę.
   const tapHandler = (fn: () => void) => ({
-    onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); e.stopPropagation(); fn(); },
+    onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); e.stopPropagation(); sfx.unlock(); fn(); },
   });
 
+  const skinSlots: { key: keyof Skins; label: string }[] = [
+    { key: 'pacRight', label: 'Gracz — w prawo ▶' },
+    { key: 'pacLeft', label: 'Gracz — w lewo ◀' },
+    { key: 'ghost0', label: 'Duch 1 (czerwony)' },
+    { key: 'ghost1', label: 'Duch 2 (różowy)' },
+    { key: 'ghost2', label: 'Duch 3 (błękitny)' },
+    { key: 'ghost3', label: 'Duch 4 (pomarańczowy)' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-start py-4 px-2">
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-start py-2 px-2">
       {/* Link powrotny na stronę główną */}
       <a
         href="index.html"
-        className="self-start mb-2 text-gray-400 text-sm hover:text-yellow-400 transition-colors select-none"
+        className="self-start mb-1 text-gray-400 text-sm hover:text-yellow-400 transition-colors select-none"
       >
         ← Powrót na TwójOtwór.pl
       </a>
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="text-3xl">🩺</div>
-        <div>
-          <h1 className="text-yellow-400 font-black text-2xl tracking-wide" style={{ fontFamily: 'Arial Black, sans-serif', textShadow: '0 0 10px #FFD700' }}>
-            DR. LESZEK PAC-MAN <span className="text-pink-400">69!</span>
-          </h1>
-          <p className="text-gray-400 text-xs text-center">Zjedz wszystkie 69! Unikaj duchów!</p>
-        </div>
-        <div className="text-3xl">🩺</div>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="text-2xl">🩺</div>
+        <h1 className="text-yellow-400 font-black text-xl tracking-wide" style={{ fontFamily: 'Arial Black, sans-serif', textShadow: '0 0 10px #FFD700' }}>
+          DR. LESZEK PAC-MAN <span className="text-pink-400">69!</span>
+        </h1>
+        <div className="text-2xl">🩺</div>
       </div>
 
-      {/* Score bar */}
-      <div className="flex gap-6 mb-3 bg-gray-900 rounded-xl px-6 py-2 shadow-inner border border-gray-700">
-        <div className="text-center">
-          <div className="text-gray-400 text-xs uppercase tracking-widest">Wynik</div>
-          <div className="text-yellow-400 font-bold text-xl">{uiScore}</div>
+      {/* Tabela wyników + ikony (dźwięk, podmiana obrazków) */}
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex gap-5 bg-gray-900 rounded-xl px-4 py-2 shadow-inner border border-gray-700">
+          <div className="text-center">
+            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Wynik</div>
+            <div className="text-yellow-400 font-bold text-lg">{uiScore}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Poziom</div>
+            <div className="text-green-400 font-bold text-lg">{uiLevel}</div>
+            <div className="text-gray-500 text-[9px] max-w-[80px] truncate">{LEVELS[(uiLevel - 1) % LEVELS.length]?.name}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-gray-400 text-[10px] uppercase tracking-widest">Życia</div>
+            <div className="text-red-400 font-bold text-lg">{'🩺'.repeat(Math.max(0, uiLives))}</div>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-xs uppercase tracking-widest">Poziom</div>
-          <div className="text-green-400 font-bold text-xl">{uiLevel}</div>
-          <div className="text-gray-500 text-[10px] max-w-[90px] truncate">{LEVELS[(uiLevel - 1) % LEVELS.length]?.name}</div>
-        </div>
-        <div className="text-center">
-          <div className="text-gray-400 text-xs uppercase tracking-widest">Życia</div>
-          <div className="text-red-400 font-bold text-xl">{'🩺'.repeat(Math.max(0, uiLives))}</div>
+
+        <div className="flex flex-col gap-1">
+          <button
+            aria-label={muted ? 'Włącz dźwięk' : 'Wycisz dźwięk'}
+            title={muted ? 'Włącz dźwięk' : 'Wycisz dźwięk'}
+            {...tapHandler(() => setMuted(m => !m))}
+            className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-600 text-lg flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
+          <button
+            aria-label="Podmień obrazki"
+            title="Podmień obrazki (własne postacie)"
+            {...tapHandler(() => setSkinPanel(v => !v))}
+            className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-600 text-lg flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
+          >
+            🖼️
+          </button>
         </div>
       </div>
+
+      {/* Panel podmiany obrazków */}
+      {skinPanel && (
+        <div className="mb-2 w-full max-w-[520px] bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-yellow-400 font-bold">🖼️ Własne obrazki</span>
+            <button className="text-gray-400 px-2" {...tapHandler(() => setSkinPanel(false))}>✕</button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {skinSlots.map(slot => (
+              <div key={slot.key} className="flex items-center gap-2 bg-gray-950 rounded-lg px-2 py-1.5 border border-gray-800">
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-800 shrink-0 flex items-center justify-center">
+                  {skins[slot.key]
+                    ? <img src={skins[slot.key]} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-gray-600 text-xs">—</span>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-gray-300 text-xs truncate">{slot.label}</div>
+                  <div className="flex gap-2">
+                    <label className="text-yellow-400 text-xs underline cursor-pointer">
+                      wybierz
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => { void setSkin(slot.key, e.target.files?.[0] ?? null); e.target.value = ''; }}
+                      />
+                    </label>
+                    {skins[slot.key] && (
+                      <button className="text-red-400 text-xs underline" onClick={() => clearSkin(slot.key)}>usuń</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-gray-500 text-[11px] mt-2">Dla gracza wybierz DWA zdjęcia: „w prawo" i „w lewo". Jeśli wgrasz tylko jedno, drugi kierunek będzie lustrzanym odbiciem. Obrazki zapisują się w Twojej przeglądarce.</p>
+        </div>
+      )}
 
       {/* Canvas */}
       <div className="relative rounded-xl overflow-hidden shadow-2xl border-2 border-blue-800"
@@ -788,57 +1056,66 @@ export default function App() {
           ref={canvasRef}
           width={W}
           height={H}
-          style={{ display: 'block', maxWidth: '100%', maxHeight: '70vh', imageRendering: 'pixelated' }}
+          style={{ display: 'block', maxWidth: '100%', maxHeight: '52vh', imageRendering: 'pixelated' }}
+          onPointerDown={() => sfx.unlock()}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          onClick={handleAction}
         />
       </div>
 
-      {/* Duży ekranowy przycisk akcji (zamiast Enter): start / następny poziom / restart */}
-      {(uiPhase === 'idle' || uiPhase === 'gameover' || uiPhase === 'levelwin') && (
+      {/* Sterowanie: POMIŃ POZIOM • JOYSTICK • OD NOWA */}
+      <div className="mt-3 flex items-center justify-center gap-3 select-none">
         <button
-          {...tapHandler(handleAction)}
-          className="mt-4 px-8 py-4 bg-yellow-400 text-black font-black text-xl rounded-full active:bg-yellow-300 active:scale-95 transition-all shadow-lg select-none touch-none"
+          {...tapHandler(skipLevel)}
+          className="px-3 py-3 w-24 bg-green-500 text-black font-bold text-xs leading-tight rounded-2xl active:bg-green-400 active:scale-95 transition-all shadow-lg select-none touch-none"
         >
-          {uiPhase === 'idle' ? '🩺 ZAGRAJ!' : uiPhase === 'levelwin' ? '➡️ NASTĘPNY POZIOM' : '🔄 ZAGRAJ PONOWNIE'}
+          ⏭️<br />POMIŃ<br />POZIOM
         </button>
-      )}
 
-      {/* Ekranowy D-pad + przyciski akcji — zawsze widoczne, sterowanie dotykowe */}
-      <div className="mt-4 flex flex-col items-center gap-2 select-none">
-        <div className="grid grid-cols-3 grid-rows-3 gap-2" style={{ width: 'fit-content' }}>
-          <span />
-          <button className={dirBtnStyle} {...tapHandler(() => { stateRef.current.nextDir = { x: 0, y: -1 }; })}>▲</button>
-          <span />
-          <button className={dirBtnStyle} {...tapHandler(() => { stateRef.current.nextDir = { x: -1, y: 0 }; })}>◀</button>
-          <span />
-          <button className={dirBtnStyle} {...tapHandler(() => { stateRef.current.nextDir = { x: 1, y: 0 }; })}>▶</button>
-          <span />
-          <button className={dirBtnStyle} {...tapHandler(() => { stateRef.current.nextDir = { x: 0, y: 1 }; })}>▼</button>
-          <span />
+        {/* Pad / joystick */}
+        <div
+          ref={joyRef}
+          onPointerDown={onJoyDown}
+          onPointerMove={onJoyMove}
+          onPointerUp={onJoyUp}
+          onPointerCancel={onJoyUp}
+          className="relative rounded-full touch-none select-none"
+          style={{
+            width: JOY_R * 2, height: JOY_R * 2,
+            background: 'radial-gradient(circle at 50% 40%, #2b3140, #11141c)',
+            border: '3px solid #3b4354',
+            boxShadow: 'inset 0 6px 18px rgba(0,0,0,.8), 0 4px 14px rgba(0,0,0,.6)',
+          }}
+        >
+          <span className="absolute left-1/2 -translate-x-1/2 top-1 text-gray-500 text-xs">▲</span>
+          <span className="absolute left-1/2 -translate-x-1/2 bottom-1 text-gray-500 text-xs">▼</span>
+          <span className="absolute top-1/2 -translate-y-1/2 left-1.5 text-gray-500 text-xs">◀</span>
+          <span className="absolute top-1/2 -translate-y-1/2 right-1.5 text-gray-500 text-xs">▶</span>
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: KNOB_R * 2, height: KNOB_R * 2,
+              left: JOY_R - KNOB_R + knob.x,
+              top: JOY_R - KNOB_R + knob.y,
+              background: 'radial-gradient(circle at 35% 30%, #ffe680, #f5b400)',
+              boxShadow: '0 3px 10px rgba(0,0,0,.7)',
+              transition: joyIdRef.current === null ? 'left .12s ease, top .12s ease' : 'none',
+            }}
+          />
         </div>
 
-        {/* Dodatkowe klawisze ekranowe: pomiń poziom + zagraj od nowa */}
-        <div className="flex items-center gap-3 mt-2">
-          <button
-            {...tapHandler(skipLevel)}
-            className="px-5 py-3 bg-green-500 text-black font-bold text-sm rounded-full active:bg-green-400 active:scale-95 transition-all shadow-lg select-none touch-none"
-          >
-            ⏭️ POMIŃ POZIOM
-          </button>
-          <button
-            {...tapHandler(startGame)}
-            className="px-5 py-3 bg-red-500 text-white font-bold text-sm rounded-full active:bg-red-400 active:scale-95 transition-all shadow-lg select-none touch-none"
-          >
-            🔄 OD NOWA
-          </button>
-        </div>
+        <button
+          {...tapHandler(startGame)}
+          className="px-3 py-3 w-24 bg-red-500 text-white font-bold text-xs leading-tight rounded-2xl active:bg-red-400 active:scale-95 transition-all shadow-lg select-none touch-none"
+        >
+          🔄<br />OD<br />NOWA
+        </button>
       </div>
 
-      <p className="mt-3 text-gray-500 text-xs text-center px-4">
-        📱 Dotykaj strzałek, aby sterować • przesuwaj palcem po planszy • ⏭️ pomija poziom
+      <p className="mt-2 text-gray-500 text-[11px] text-center px-4">
+        🕹️ Steruj padem • dotknij planszy, aby zacząć / przejść dalej
       </p>
-      <p className="mt-1 text-gray-600 text-xs text-center px-4">🩺 Dr. Leszek vs duchy • 5 labiryntów: {LEVELS.map(l => l.name).join(' → ')} • Power-up = DUŻE 69</p>
     </div>
   );
 }
