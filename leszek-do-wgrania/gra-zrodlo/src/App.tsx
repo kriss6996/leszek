@@ -1031,39 +1031,39 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-start py-2 px-2">
+    <div className="game-shell w-full flex flex-col items-center justify-start bg-gray-950 px-2 pt-2 overflow-hidden">
       {/* Link powrotny na stronę główną */}
       <a
         href="index.html"
-        className="self-start mb-1 text-gray-400 text-sm hover:text-yellow-400 transition-colors select-none"
+        className="shrink-0 self-start mb-1 text-gray-400 text-xs hover:text-yellow-400 transition-colors select-none"
       >
         ← Powrót na TwójOtwór.pl
       </a>
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="text-2xl">🩺</div>
-        <h1 className="text-yellow-400 font-black text-xl tracking-wide" style={{ fontFamily: 'Arial Black, sans-serif', textShadow: '0 0 10px #FFD700' }}>
+      <div className="shrink-0 flex items-center gap-2 mb-1 whitespace-nowrap">
+        <div className="text-lg sm:text-2xl">🩺</div>
+        <h1 className="text-yellow-400 font-black text-base sm:text-xl tracking-wide" style={{ fontFamily: 'Arial Black, sans-serif', textShadow: '0 0 10px #FFD700' }}>
           DR. LESZEK PAC-MAN <span className="text-pink-400">69!</span>
         </h1>
-        <div className="text-2xl">🩺</div>
+        <div className="text-lg sm:text-2xl">🩺</div>
       </div>
 
-      {/* Tabela wyników (kompaktowa, o połowę niższa) + ikony obok (dźwięk, podmiana obrazków) */}
-      <div className="flex items-center gap-2 mb-2">
-        <div className="flex items-center gap-4 bg-gray-900 rounded-xl px-3 py-1 shadow-inner border border-gray-700 leading-none">
-          <div className="flex items-baseline gap-1">
-            <span className="text-gray-400 text-[9px] uppercase tracking-widest">Wynik</span>
-            <span className="text-yellow-400 font-bold text-base">{uiScore}</span>
+      {/* Tabela wyników — ZAWSZE w jednym wierszu, bez zawijania + ikony obok (dźwięk, podmiana obrazków) */}
+      <div className="shrink-0 w-full max-w-[560px] flex items-center justify-center gap-2 mb-1 flex-nowrap">
+        <div className="flex-1 min-w-0 flex items-center justify-center gap-2 sm:gap-4 bg-gray-900 rounded-xl px-2 sm:px-3 py-1 shadow-inner border border-gray-700 leading-none whitespace-nowrap flex-nowrap overflow-hidden">
+          <div className="flex items-baseline gap-1 whitespace-nowrap">
+            <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-wider">Wynik</span>
+            <span className="text-yellow-400 font-bold text-sm sm:text-base">{uiScore}</span>
           </div>
-          <div className="flex items-baseline gap-1" title={LEVELS[(uiLevel - 1) % LEVELS.length]?.name}>
-            <span className="text-gray-400 text-[9px] uppercase tracking-widest">Poziom</span>
-            <span className="text-green-400 font-bold text-base">{uiLevel}</span>
-            <span className="text-gray-500 text-[9px] max-w-[70px] truncate">{LEVELS[(uiLevel - 1) % LEVELS.length]?.name}</span>
+          <div className="flex items-baseline gap-1 whitespace-nowrap min-w-0" title={LEVELS[(uiLevel - 1) % LEVELS.length]?.name}>
+            <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-wider">Poziom</span>
+            <span className="text-green-400 font-bold text-sm sm:text-base">{uiLevel}</span>
+            <span className="text-gray-500 text-[9px] min-w-0 max-w-[40px] sm:max-w-[70px] truncate">{LEVELS[(uiLevel - 1) % LEVELS.length]?.name}</span>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-gray-400 text-[9px] uppercase tracking-widest">Życia</span>
-            <span className="text-red-400 font-bold text-base">{'🩺'.repeat(Math.max(0, uiLives))}</span>
+          <div className="flex items-baseline gap-1 whitespace-nowrap">
+            <span className="text-gray-400 text-[8px] sm:text-[9px] uppercase tracking-wider">Życia</span>
+            <span className="text-red-400 font-bold text-sm sm:text-base">{uiLives > 3 ? `🩺×${uiLives}` : '🩺'.repeat(Math.max(0, uiLives))}</span>
           </div>
         </div>
 
@@ -1087,9 +1087,9 @@ export default function App() {
         </div>
       </div>
 
-      {/* Panel podmiany obrazków */}
+      {/* Panel podmiany obrazków (zwija się do połowy ekranu i przewija wewnętrznie) */}
       {skinPanel && (
-        <div className="mb-2 w-full max-w-[520px] bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm">
+        <div className="skin-panel shrink-0 mb-1 w-full max-w-[520px] bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-yellow-400 font-bold">🖼️ Własne obrazki</span>
             <div className="flex items-center gap-2">
@@ -1144,14 +1144,24 @@ export default function App() {
         </div>
       )}
 
-      {/* Canvas */}
-      <div className="relative rounded-xl overflow-hidden shadow-2xl border-2 border-blue-800"
-        style={{ boxShadow: '0 0 30px #1a1aff88' }}>
+      {/* Canvas — plansza skaluje się ELASTYCZNIE do wolnego miejsca (flex-1),
+          zachowując proporcje (max-width/max-height + auto). */}
+      <div className="flex-1 min-h-0 min-w-0 w-full flex items-center justify-center py-1">
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
-          style={{ display: 'block', maxWidth: '100%', maxHeight: '52vh', imageRendering: 'pixelated' }}
+          className="rounded-xl border-2 border-blue-800"
+          style={{
+            display: 'block',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            imageRendering: 'pixelated',
+            touchAction: 'none',
+            boxShadow: '0 0 30px #1a1aff88',
+          }}
           onPointerDown={() => sfx.unlock()}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -1159,8 +1169,10 @@ export default function App() {
         />
       </div>
 
-      {/* Sterowanie: POMIŃ POZIOM • JOYSTICK • OD NOWA */}
-      <div className="mt-3 flex items-center justify-center gap-3 select-none">
+      {/* Sterowanie: POMIŃ POZIOM • JOYSTICK • OD NOWA — zawsze widoczne
+          nad paskiem przeglądarki (ostatni, niekurczony wiersz powłoki 100dvh,
+          dolny margines to env(safe-area-inset-bottom) z .game-shell). */}
+      <div className="shrink-0 mt-2 mb-1 flex items-center justify-center gap-3 select-none">
         <button
           {...tapHandler(skipLevel)}
           className="px-3 py-3 w-24 bg-green-500 text-black font-bold text-xs leading-tight rounded-2xl active:bg-green-400 active:scale-95 transition-all shadow-lg select-none touch-none"
