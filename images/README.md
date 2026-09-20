@@ -69,3 +69,39 @@ python3 -m http.server 8000
 ```
 
 Podmień plik w `images/` i odśwież stronę (F5) — grafika zmieni się od razu.
+
+---
+
+# 🖐️ Grafiki gry „Gabinet Dr. Leszka” — katalog `images/gabinet/`
+
+Druga gra, **`gabinet.html`** (Gabinet Dr. Leszka — Mistrz Oklepywania), korzysta
+z osobnego katalogu **`images/gabinet/`**. Zasada podmiany jest identyczna jak wyżej:
+wgraj plik o **tej samej nazwie** („Add file → Upload files”) i odśwież grę (F5).
+
+| Plik                       | Co przedstawia | Uwagi |
+|----------------------------|----------------|-------|
+| `tlo.png`                  | statyczny widok gabinetu (ściana, okno, szafa, plakat) | tło 1376×768 |
+| `kozetka.png`              | pusta kozetka/badawcza | rysowana pod pacjentem |
+| `pacjent.png`              | pacjent leżący na kozetce — mina spokojna | pełny kadr ciała |
+| `pacjent_reakcja.png`      | pacjent — mina „zaskoczony” (po oklepaniu) | **ten sam kadr co `pacjent.png`**, inna tylko mina |
+| `pacjent_relaks.png`       | pacjent — mina „błogi relaks” | **ten sam kadr co `pacjent.png`**, inna tylko mina |
+| `doktor.png`               | Doktor Leszek w fartuchu (ciało bez animowanej ręki) | stoi obok kozetki |
+| `doktor_reka.png`          | prawa ręka doktora (animowana) | obracana wokół barku — patrz niżej |
+| `doktor_calosc.png`        | Doktor Leszek z obiema rękami | zapasowa, nieużywana w animacji |
+
+### Ważne przy podmianie
+
+- **Miny pacjenta** (`pacjent*.png`) muszą mieć **identyczny kadr i pozycję głowy** —
+  gra rysuje jedną z nich w tym samym miejscu (różni się tylko twarz).
+- **`doktor_reka.png`** jest obracana wokół punktu barku zapisanego w `gabinet.html`
+  (sekcja `REKA.pivot`). Jeśli wgrasz rękę w innej pozycji, dostosuj `pivot`/`dlon`
+  oraz kąty (`katSpoczynek`, `katUniesienie`) w pliku `gabinet.html`.
+- Pozycje wszystkich warstw (x, y, skala) są w sekcji `GRAFIKI` na początku
+  skryptu w `gabinet.html` — łatwo przesunąć postacie po podmianie grafik.
+
+### Test lokalny
+
+```bash
+python3 -m http.server 8000
+# potem w przeglądarce: http://localhost:8000/gabinet.html
+```

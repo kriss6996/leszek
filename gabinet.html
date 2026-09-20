@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gabinet Dr. Leszka — Mistrz Oklepywania! 🖐️</title>
+<style>
+  :root { --nieb: #007bff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #10241c; height: 100%; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100svh; overflow: hidden;
+  }
+  #stage {
+    position: relative;
+    width: min(100vw, calc(100svh * 1376 / 768));
+    aspect-ratio: 1376 / 768;
+    max-height: 100svh;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    position: absolute; z-index: 5; color: #fff; pointer-events: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,.55);
+  }
+  #hud-lewo  { top: 1.4%; left: 1.6%; }
+  #hud-prawo { top: 1.4%; right: 1.6%; text-align: right; }
+  .hud .etykieta { font-size: clamp(9px, 1.3vw, 15px); letter-spacing: .12em; opacity: .85; text-transform: uppercase; }
+  .hud .wartosc  { font-size: clamp(20px, 3.4vw, 40px); font-weight: 800; line-height: 1.05; }
+  #combo-wrap { margin-top: .2em; opacity: 0; transition: opacity .15s; }
+  #combo-wrap.on { opacity: 1; }
+  #combo-wartosc { color: #ffd23f; }
+  #czas-wartosc.duzo { color: #ff6b6b; }
+
+  #przyciski {
+    position: absolute; z-index: 6; bottom: 1.8%; right: 1.6%;
+    display: flex; gap: .5em;
+  }
+  #przyciski button {
+    font: inherit; font-weight: 700; font-size: clamp(11px, 1.6vw, 18px);
+    padding: .45em .9em; border-radius: 999px; border: 2px solid rgba(255,255,255,.35);
+    background: rgba(0,0,0,.45); color: #fff; cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  }
+  #przyciski button:hover { background: rgba(0,0,0,.65); border-color: #fff; }
+  #przyciski a { color: #fff; text-decoration: none; }
+
+  /* ---------- ekrany (start / koniec) ---------- */
+  .ekran {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1em; text-align: center; color: #fff; padding: 1em;
+    background: rgba(8, 30, 22, .78); backdrop-filter: blur(3px);
+  }
+  .ekran.ukryty { display: none; }
+  .ekran h1 {
+    margin: 0; font-size: clamp(22px, 4.6vw, 54px); line-height: 1.1;
+    text-shadow: 0 3px 0 rgba(0,0,0,.4);
+  }
+  .ekran p  { margin: 0; font-size: clamp(13px, 2vw, 22px); max-width: 34em; line-height: 1.45; }
+  .ekran .male { font-size: clamp(11px, 1.5vw, 16px); opacity: .85; }
+  .przycisk-duzy {
+    font: inherit; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    font-size: clamp(16px, 2.6vw, 30px); color: #fff; cursor: pointer;
+    background: linear-gradient(180deg, #35d07f, #1d9e5c);
+    border: none; border-radius: 14px; padding: .55em 1.6em;
+    box-shadow: 0 5px 0 #12653b, 0 8px 18px rgba(0,0,0,.45);
+  }
+  .przycisk-duzy:active { transform: translateY(3px); box-shadow: 0 2px 0 #12653b; }
+  .przycisk-dom {
+    font: inherit; font-weight: 700; font-size: clamp(12px, 1.8vw, 20px);
+    color: #fff; text-decoration: none;
+    background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.5);
+    border-radius: 12px; padding: .5em 1.2em;
+  }
+  .przycisk-dom:hover { background: rgba(255,255,255,.22); }
+  #ekran-koniec .wynik-koniec {
+    font-size: clamp(34px, 7vw, 84px); font-weight: 800; color: #ffd23f;
+    text-shadow: 0 4px 0 rgba(0,0,0,.35); line-height: 1;
+  }
+  #rekord-info { color: #7dffb9; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gra" width="1376" height="768"></canvas>
+
+  <div class="hud" id="hud-lewo">
+    <div class="etykieta">Punkty</div>
+    <div class="wartosc" id="punkty-wartosc">0</div>
+    <div id="combo-wrap"><span class="etykieta">Seria</span> <span class="wartosc" id="combo-wartosc" style="font-size:clamp(14px,2.2vw,26px)">x1.0</span></div>
+  </div>
+  <div class="hud" id="hud-prawo">
+    <div class="etykieta">Czas</div>
+    <div class="wartosc" id="czas-wartosc">60</div>
+  </div>
+
+  <div id="przyciski">
+    <button id="btn-dzwiek" title="Dźwięk">🔊</button>
+    <button id="btn-restart" title="Od nowa">🔁</button>
+    <a href="index.html"><button title="Strona główna">🏠 Strona główna</button></a>
+  </div>
+
+  <div class="ekran" id="ekran-start">
+    <h1>🖐️ Gabinet Dr. Leszka<br>Mistrz Oklepywania</h1>
+    <p>Pacjent leży na kozetce i czeka na <strong>relaksujący masaż pleców</strong>.
+       Klikaj (lub tapnij / spacja), aby oklepać go dłonią — ale w dobrym rytmie!</p>
+    <p class="male">⏱️ 60 sekund &nbsp;•&nbsp; 🎯 idealny rytm = <b>PERFECT</b> i mnożnik serii &nbsp;•&nbsp; 🚫 zbyt szybki spam = strata serii</p>
+    <button class="przycisk-duzy" id="btn-start">▶ Start</button>
+    <a class="przycisk-dom" href="index.html">🏠 Powrót do strony głównej</a>
+  </div>
+
+  <div class="ekran ukryty" id="ekran-koniec">
+    <h1>Koniec wizyty! 🩺</h1>
+    <div class="wynik-koniec" id="wynik-koniec">0</div>
+    <p id="opinia-koniec"></p>
+    <p id="rekord-info"></p>
+    <button class="przycisk-duzy" id="btn-ponownie">🔁 Zagraj ponownie</button>
+    <a class="przycisk-dom" href="index.html">🏠 Powrót do strony głównej</a>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   GABINET DR. LESZEKA — konfiguracja sceny
+   Canvas 1376x768. Wszystkie grafiki to osobne pliki PNG z images/gabinet/
+   — mozesz je podmieniac wlasnymi (nazwy plikow musza zostac te same).
+   ===================================================================== */
+
+const KATALOG_GRAFIK = "images/gabinet/";
+
+const GRAFIKI = {
+  tlo:              { plik: "tlo.png" },
+  kozetka:          { plik: "kozetka.png",   x: 145, y: 345, skala: 0.62 },
+  pacjent:          { plik: "pacjent.png",   x: 300, y: 353, skala: 0.44 },
+  pacjentReakcja:   { plik: "pacjent_reakcja.png" },
+  pacjentRelaks:    { plik: "pacjent_relaks.png" },
+  doktor:           { plik: "doktor.png",    x: 570, y: 195, skala: 0.893 },
+  doktorReka:       { plik: "doktor_reka.png" },
+  doktorCalosc:     { plik: "doktor_calosc.png" }, // zapasowa, nieuzywana w animacji
+};
+
+/*Geometry ramienia:
+  pivot = bark (punkt obrotu), dlon = srodek dloni (w px sprite'a),
+  katy w stopniach, konwencja ekranowa (0 = w prawo, 90 = w dol, -90 = w gore). */
+const REKA = {
+  pivot: { x: 200, y: 310 },
+  dlon:  { x: 55,  y: 100 },
+  skala: 1.027,
+  katSpoczynek: -167.6,   // dlon oparta o plecy pacjenta
+  katUniesienie: -133.0,  // zamach
+  katDocisk: -173.5       // docisk = "klaps" masazu
+};
+
+const TWARZ = { x: 315, y: 373, w: 62, h: 54 }; // mina pacjenta (rysuje sie z bobem)
+const KONTAKT = { x: 525, y: 423 };              // punkt na plecach pacjenta (efekty)
+const CZAS_GRY = 60;                             // sekundy
+
+const OCENY = [
+  { min: 0.45, max: 0.80, nazwa: "PERFECT!", punkty: 150, kolor: "#ffd23f", dymek: ["Aaaaach!", "Odlot!", "No i czadu!", "Bosko!"] },
+  { min: 0.25, max: 1.20, nazwa: "Bravo!",  punkty: 100, kolor: "#7dffb9", dymek: ["Ach!", "Mmm...", "Jeszcze!", "Relaks!"] },
+  { min: 0.13, max: 1.90, nazwa: "OK",      punkty: 50,  kolor: "#9fd6ff", dymek: ["Ach...", "No dobrze", "Hmm.", "Dziekuje"] },
+  { min: 0.00, max: 9.99, nazwa: "Za szybko!", punkty: 0, kolor: "#ff8b8b", dymek: ["Hej, spokojnie!", "Ojej!", "Auć... za mocno!", "Łoooo"] },
+];
+
+const SPAM_OKNO = 0.13;   // s — uderzenia czesc niz to sa ignorowane
+const MINA_KALM = 2.6;    // s po ostatnim uderzeniu pacjent się uspokaja (min relaksu)
+
+/* ===================================================================== */
+
+const cv = document.getElementById("gra");
+const ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+
+const stan = {
+  faza: "start",            // start | gra | koniec
+  punkty: 0,
+  seria: 0,
+  mnoznik: 1,
+  czasStart: 0,
+  czasKoniec: 0,
+  ostatniHit: -99,
+  rekord: +(localStorage.getItem("gabinet_rekord") || 0),
+  dzwiek: localStorage.getItem("gabinet_dzwiek") !== "0",
+};
+
+/* ---------- wczytywanie grafik (z podmiana ?v= jak w pac-manie) ---------- */
+const img = {};
+let zapisane = 0, wszystkie = 0;
+for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
+  wszystkie++;
+  const obraz = new Image();
+  obraz.onload = () => { zapisane++; };
+  obraz.onerror = () => { obraz._blad = true; zapisane++; };
+  obraz.src = KATALOG_GRAFIK + cfg.plik + "?v=" + Date.now();
+  img[klucz] = obraz;
+}
+
+function rysuj(obraz, x, y, skala) {
+  if (!obraz.complete || obraz._blad) {
+    // awaryjny placeholder, gdy plik zniknie z repo
+    ctx.fillStyle = "#888"; ctx.fillRect(x, y, 120 * (skala||1), 60 * (skala||1));
+    ctx.fillStyle = "#fff"; ctx.font = "12px sans-serif"; ctx.fillText("brak PNG", x + 8, y + 30);
+    return;
+  }
+  const sk = skala || 1;
+  ctx.drawImage(obraz, x, y, obraz.width * sk, obraz.height * sk);
+}
+
+/* ---------- animacja ramienia (geometria jak w kompozycie referencyjnym) --- */
+function pozycjaRamienia(kat) {
+  const sx = GRAFIKI.doktor.x + REKA.pivot.x * GRAFIKI.doktor.skala;
+  const sy = GRAFIKI.doktor.y + REKA.pivot.y * GRAFIKI.doktor.skala;
+  const sk = REKA.skala * GRAFIKI.doktor.skala;
+  const dx = (REKA.dlon.x - REKA.pivot.x) * sk;
+  const dy = (REKA.dlon.y - REKA.pivot.y) * sk;
+  const t = kat * Math.PI / 180;
+  return {
+    x: sx, y: sy,
+    dx: dx * Math.cos(t) - dy * Math.sin(t),
+    dy: dx * Math.sin(t) + dy * Math.cos(t),
+  };
+}
+
+function rysujReke(kat) {
+  const p = pozycjaRamienia(kat);
+  const obraz = img.doktorReka;
+  const sk = REKA.skala * GRAFIKI.doktor.skala;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(kat * Math.PI / 180);
+  if (obraz.complete && !obraz._blad) {
+    ctx.drawImage(obraz, -REKA.pivot.x * sk, -REKA.pivot.y * sk,
+                  obraz.width * sk, obraz.height * sk);
+  } else {
+    ctx.fillStyle = "#eee"; ctx.fillRect(-10, -10, 120, 30);
+  }
+  ctx.restore();
+}
+
+/* krzywa fazy reki: spoczynek -> zamach -> docisk -> odbicie -> spoczynek */
+function katRamienia(czas, hitCzas) {
+  const sp = REKA.katSpoczynek, up = REKA.katUniesienie, dn = REKA.katDocisk;
+  if (hitCzas === null) return sp + Math.sin(czas * 0.0016) * 2.2; // spokojne kołysanie
+  const t = (czas - hitCzas) / 1000;
+  if (t < 0.09)  { const k = t / 0.09;               return sp + (up - sp) * (k * k); }
+  if (t < 0.17)  { const k = (t - 0.09) / 0.08;      return up + (dn - up) * (k * k); }
+  if (t < 0.26)  { const k = (t - 0.17) / 0.09;      return dn + (sp - dn) * (1 - Math.pow(1 - k, 2)); }
+  if (t < 0.40)  { const k = (t - 0.26) / 0.14;      return sp + Math.sin(k * Math.PI) * 5; }
+  return sp + Math.sin(czas * 0.0016) * 2.2;
+}
+
+/* ---------- pacjent: bob (sprzezyna) + mina ---------- */
+const pacjent = { bob: 0, predkosc: 0, ostatniHit: -99, mina: "spokoj" };
+
+function impulsPacjenta() { pacjent.predkosc += 260; }
+
+function krokPacjenta(dt, czas) {
+  // sprzezyna wokol 0
+  const k = 90, c = 9;
+  pacjent.predkosc += (-k * pacjent.bob - c * pacjent.predkosc) * dt;
+  pacjent.bob += pacjent.predkosc * dt;
+  // mina
+  if (czas - pacjent.ostatniHit < MINA_KALM * 1000) pacjent.mina = "reakcja";
+  else pacjent.mina = Math.sin(czas * 0.0009) > 0.55 ? "relaks" : "spokoj";
+}
+
+function rysujPacjenta() {
+  const cfg = GRAFIKI.pacjent;
+  const bob = Math.max(-8, Math.min(10, pacjent.bob));
+  rysuj(img.kozetka, GRAFIKI.kozetka.x, GRAFIKI.kozetka.y, GRAFIKI.kozetka.skala);
+  rysuj(img.pacjent, cfg.x, cfg.y + bob, cfg.skala);
+  // mina nakladana na glowe (ta sama pozycja co "pacjent.png" — kazda mina ma identyczny kadr)
+  const skalaM = cfg.skala;
+  const mina = pacjent.mina === "reakcja" ? img.pacjentReakcja
+             : pacjent.mina === "relaks"  ? img.pacjentRelaks : img.pacjent;
+  rysuj(mina, cfg.x, cfg.y + bob, skalaM);
+}
+
+/* ---------- dymki i czasteczki ---------- */
+const dymki = [];
+const czastki = [];
+const napisy = [];
+
+function dodajDymek(tekst, kolor) {
+  dymki.push({ tekst, kolor, x: KONTAKT.x - 60 + Math.random() * 40, y: KONTAKT.y - 120, t0: performance.now(), zycie: 1500 });
+}
+function dodajNapis(tekst, kolor) {
+  napisy.push({ tekst, kolor, x: KONTAKT.x + 90, y: KONTAKT.y - 60, t0: performance.now(), zycie: 900 });
+}
+function dodajCzastki(n, kolor) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = 60 + Math.random() * 160;
+    czastki.push({ x: KONTAKT.x, y: KONTAKT.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 90, t0: performance.now(), zycie: 650, kolor, r: 2 + Math.random() * 3 });
+  }
+}
+
+function rysujEfekty(czas) {
+  for (let i = dymki.length - 1; i >= 0; i--) {
+    const d = dymki[i], w = czas - d.t0;
+    if (w > d.zycie) { dymki.splice(i, 1); continue; }
+    const k = w / d.zycie;
+    const y = d.y - k * 30;
+    const alfa = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25;
+    ctx.save();
+    ctx.globalAlpha = alfa;
+    ctx.font = "700 22px 'Helvetica Neue', Arial, sans-serif";
+    const szer = ctx.measureText(d.tekst).width + 26;
+    ctx.fillStyle = "rgba(255,255,255,.95)";
+    ctx.strokeStyle = d.kolor; ctx.lineWidth = 3;
+    const x = d.x - szer / 2, yy = y - 20, hh = 40, rr = 14;
+    ctx.beginPath();
+    ctx.moveTo(x + rr, yy);
+    ctx.arcTo(x + szer, yy, x + szer, yy + hh, rr);
+    ctx.arcTo(x + szer, yy + hh, x, yy + hh, rr);
+    ctx.lineTo(x + 14, yy + hh);
+    ctx.lineTo(x + 8, yy + hh + 12);
+    ctx.lineTo(x + 4, yy + hh);
+    ctx.arcTo(x, yy + hh, x, yy, rr);
+    ctx.arcTo(x, yy, x + szer, yy, rr);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#223"; ctx.textAlign = "center";
+    ctx.fillText(d.tekst, d.x, y + 6);
+    ctx.restore();
+  }
+  for (let i = napisy.length - 1; i >= 0; i--) {
+    const n = napisy[i], w = czas - n.t0;
+    if (w > n.zycie) { napisy.splice(i, 1); continue; }
+    const k = w / n.zycie;
+    ctx.save();
+    ctx.globalAlpha = 1 - k;
+    ctx.font = "800 30px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 5;
+    ctx.strokeText(n.tekst, n.x, n.y - k * 46);
+    ctx.fillStyle = n.kolor;
+    ctx.fillText(n.tekst, n.x, n.y - k * 46);
+    ctx.restore();
+  }
+  for (let i = czastki.length - 1; i >= 0; i--) {
+    const c = czastki[i], w = czas - c.t0;
+    if (w > c.zycie) { czastki.splice(i, 1); continue; }
+    const k = w / 1000;
+    const x = c.x + c.vx * k, y = c.y + c.vy * k + 260 * k * k;
+    ctx.save();
+    ctx.globalAlpha = 1 - w / c.zycie;
+    ctx.fillStyle = c.kolor;
+    ctx.beginPath(); ctx.arc(x, y, c.r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ---------- dzwiek (WebAudio, bez plikow) ---------- */
+let audioCtx = null;
+function dzwiekKlaps(sila) {
+  if (!stan.dzwiek) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    // szum "plaskniecia"
+    const bufor = audioCtx.createBuffer(1, 2205, 44100);
+    const dane = bufor.getChannelData(0);
+    for (let i = 0; i < dane.length; i++) dane[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / dane.length, 2.4);
+    const zrodlo = audioCtx.createBufferSource(); zrodlo.buffer = bufor;
+    const filtr = audioCtx.createBiquadFilter(); filtr.type = "lowpass";
+    filtr.frequency.value = 700 + sila * 500;
+    const wzm = audioCtx.createGain(); wzm.gain.value = 0.5 + sila * 0.3;
+    zrodlo.connect(filtr); filtr.connect(wzm); wzm.connect(audioCtx.destination);
+    zrodlo.start(t);
+    // teskni "puk"
+    const osc = audioCtx.createOscillator(), g2 = audioCtx.createGain();
+    osc.frequency.setValueAtTime(170, t); osc.frequency.exponentialRampToValueAtTime(70, t + 0.08);
+    g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    osc.connect(g2); g2.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + 0.1);
+  } catch (e) { /* brak audio — nie przeszkadza w grze */ }
+}
+function dzwiekDing() {
+  if (!stan.dzwiek) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    [880, 1320].forEach((f, i) => {
+      const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.12, t + i * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.25);
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(t + i * 0.06); osc.stop(t + i * 0.06 + 0.3);
+    });
+  } catch (e) {}
+}
+
+/* ---------- logika gry ---------- */
+function mnoznikSerii(seria) { return Math.min(4, 1 + Math.floor(seria / 4) * 0.5); }
+
+function uderz(czas) {
+  if (stan.faza !== "gra") return;
+  if (czas - stan.ostatniHit < SPAM_OKNO * 1000) return; // anty-spam
+  const dt = (czas - stan.ostatniHit) / 1000;
+  stan.ostatniHit = czas;
+
+  const ocena = OCENY.find(o => dt >= o.min && dt < o.max) || OCENY[OCENY.length - 1];
+  const pierwsze = stan.ostatniPoprzedni === undefined;
+  stan.ostatniPoprzedni = czas;
+
+  if (pierwsze) {
+    // pierwsze uderzenie: bez oceny rytmu, poczatek serii
+    stan.seria = 1; stan.mnoznik = mnoznikSerii(stan.seria);
+    stan.punkty += Math.round(50 * stan.mnoznik);
+    dodajNapis("Start!", "#9fd6ff");
+    dodajDymek("Zaczynamy!", "#9fd6ff");
+    dodajCzastki(6, "#cfe8ff");
+  } else if (ocena.punkty > 0) {
+    stan.seria++;
+    stan.mnoznik = mnoznikSerii(stan.seria);
+    stan.punkty += Math.round(ocena.punkty * stan.mnoznik);
+    dodajNapis(ocena.nazwa + (stan.mnoznik > 1 ? " x" + stan.mnoznik : ""), ocena.kolor);
+    if (ocena.nazwa === "PERFECT!") {
+      dodajCzastki(14, "#ffd23f");
+      dodajCzastki(6, "#fff");
+      dzwiekDing();
+    } else dodajCzastki(6, "#ffe9a8");
+  } else {
+    stan.seria = 0; stan.mnoznik = 1;
+    dodajNapis(ocena.nazwa, ocena.kolor);
+  }
+  const teksty = ocena.dymek;
+  dodajDymek(teksty[Math.floor(Math.random() * teksty.length)], ocena.kolor);
+
+  pacjent.ostatniHit = czas;
+  impulsPacjenta();
+  dzwiekKlaps(ocena.punkty >= 100 ? 1 : 0.5);
+  aktualizujHud();
+}
+
+function aktualizujHud() {
+  document.getElementById("punkty-wartosc").textContent = stan.punkty;
+  const cw = document.getElementById("combo-wrap");
+  if (stan.seria >= 2) {
+    cw.classList.add("on");
+    document.getElementById("combo-wartosc").textContent = stan.seria + " • x" + stan.mnoznik;
+  } else cw.classList.remove("on");
+}
+
+function startGry() {
+  stan.faza = "gra";
+  stan.punkty = 0; stan.seria = 0; stan.mnoznik = 1;
+  stan.ostatniHit = -99; delete stan.ostatniPoprzedni;
+  pacjent.bob = 0; pacjent.predkosc = 0; pacjent.ostatniHit = -99;
+  dymki.length = 0; czastki.length = 0; napisy.length = 0;
+  stan.czasStart = performance.now();
+  document.getElementById("ekran-start").classList.add("ukryty");
+  document.getElementById("ekran-koniec").classList.add("ukryty");
+  aktualizujHud();
+  if (stan.dzwiek) {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
+  }
+}
+
+function koniecGry() {
+  stan.faza = "koniec";
+  stan.czasKoniec = performance.now();
+  const wynik = stan.punkty;
+  document.getElementById("wynik-koniec").textContent = wynik;
+  const opinie = [
+    [0,    "Pacjent dalej czeka... na się. 😴"],
+    [300,  "Solidny trening dłoni! 💪"],
+    [800,  "Pacjent wychodzi jak nowo narodzony! 🧘"],
+    [1500, "Legenda oklepywania! 🏆"],
+    [2500, "MISTRZ MASAŻU — pacjent zkredytował sobie wizyty na rok! 🌟"],
+  ];
+  const op = opinie.reverse().find(([min]) => wynik >= min) || opinie[opinie.length - 1];
+  document.getElementById("opinia-koniec").textContent = op[1];
+  const ri = document.getElementById("rekord-info");
+  if (wynik > stan.rekord) {
+    stan.rekord = wynik;
+    localStorage.setItem("gabinet_rekord", String(wynik));
+    ri.textContent = "🏅 Nowy rekord! (poprzedni: " + (wynik === stan.rekord && wynik > 0 ? "Twój najlepszy)" : ")");
+    ri.textContent = "🏅 Nowy rekord gabinetu!";
+  } else {
+    ri.textContent = "Rekord gabinetu: " + stan.rekord;
+  }
+  document.getElementById("ekran-koniec").classList.remove("ukryty");
+}
+
+/* ---------- petla glowna ---------- */
+let poprzedniCzas = 0;
+function klatka(czas) {
+  const dt = Math.min(0.05, (czas - poprzedniCzas) / 1000 || 0);
+  poprzedniCzas = czas;
+
+  ctx.clearRect(0, 0, W, H);
+  rysuj(img.tlo, 0, 0);
+
+  krokPacjenta(dt, czas);
+  rysujPacjenta();
+
+  let hitCzas = null;
+  if (czas - stan.ostatniHit < 450) hitCzas = stan.ostatniHit;
+  const kat = katRamienia(czas, stan.faza === "gra" ? hitCzas : null);
+
+  rysujReke(kat);
+  rysuj(img.doktor, GRAFIKI.doktor.x, GRAFIKI.doktor.y, GRAFIKI.doktor.skala);
+
+  if (stan.faza === "gra") {
+    const zostalo = Math.max(0, CZAS_GRY - (czas - stan.czasStart) / 1000);
+    const el = document.getElementById("czas-wartosc");
+    el.textContent = Math.ceil(zostalo);
+    el.classList.toggle("duzo", zostalo <= 10);
+    if (zostalo <= 0) koniecGry();
+  }
+
+  rysujEfekty(czas);
+  requestAnimationFrame(klatka);
+}
+requestAnimationFrame(klatka);
+
+/* ---------- sterowanie ---------- */
+cv.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  uderz(performance.now());
+});
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.code === "Enter") {
+    if (stan.faza === "gra") { e.preventDefault(); uderz(performance.now()); }
+    else if (stan.faza === "start") { e.preventDefault(); startGry(); }
+  }
+});
+document.getElementById("btn-start").addEventListener("click", startGry);
+document.getElementById("btn-ponownie").addEventListener("click", startGry);
+document.getElementById("btn-restart").addEventListener("click", () => {
+  if (stan.faza !== "start") startGry();
+});
+const btnDzwiek = document.getElementById("btn-dzwiek");
+function odswiezDzwiek() {
+  btnDzwiek.textContent = stan.dzwiek ? "🔊" : "🔇";
+}
+btnDzwiek.addEventListener("click", () => {
+  stan.dzwiek = !stan.dzwiek;
+  localStorage.setItem("gabinet_dzwiek", stan.dzwiek ? "1" : "0");
+  odswiezDzwiek();
+  if (stan.dzwiek) dzwiekDing();
+});
+odswiezDzwiek();
+</script>
+</body>
+</html>
+ner("click", () => {
+  stan.dzwiek = !stan.dzwiek;
+  localStorage.setItem("gabinet_dzwiek", stan.dzwiek ? "1" : "0");
+  odswiezDzwiek();
+  if (stan.dzwiek) dzwiekDing();
+});
+odswiezDzwiek();
+</script>
+</body>
+</html>
