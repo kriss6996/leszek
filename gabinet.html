@@ -194,15 +194,17 @@ const GRAFIKI = {
 };
 
 /* Geometria ramienia (PRAWA reka doktora — ta od strony pacjenta):
-   pivot = bark (staly punkt obrotu), dlon = srodek dloni (w px sprite'a),
-   katy w stopniach, konwencja ekranowa (0 = w prawo, 90 = w dol, -90 = w gore). */
+   pivot  = punkt mocowania rekawa w sprajcie REKI (staly punkt obrotu),
+   bark   = gniazdo barku w sprajcie CIALA (doktor.png) — tam "wpina sie" reka,
+   dlon   = srodek dloni (w px sprite'a), katy ekranowe (0=prawo, 90=dol, -90=gora). */
 const REKA = {
-  pivot: { x: 200, y: 310 },
+  pivot: { x: 200, y: 300 },
+  bark:  { x: 203, y: 375 },
   dlon:  { x: 55,  y: 100 },
   skala: 1.027,
-  katSpoczynek:  -167.6,  // dlon oparta o plecy pacjenta
-  katUniesienie: -149.5,  // zamach (reka unosi sie nad plecy)
-  katDocisk:     -171.5   // docisk = "klaps" masazu
+  katSpoczynek:  -156.0,  // dlon oparta o plecy pacjenta
+  katUniesienie: -140.0,  // zamach (reka unosi sie nad plecy)
+  katDocisk:     -160.5   // docisk = "klaps" masazu
 };
 
 const KONTAKT = { x: 525, y: 423 };        // punkt na plecach pacjenta (efekty)
@@ -278,8 +280,8 @@ const PHI0 = Math.atan2(REKA.dlon.y - REKA.pivot.y, REKA.dlon.x - REKA.pivot.x);
 
 function rysujReke(kat) {
   const sk = REKA.skala * GRAFIKI.doktor.skala;
-  const sx = GRAFIKI.doktor.x + REKA.pivot.x * GRAFIKI.doktor.skala;
-  const sy = GRAFIKI.doktor.y + REKA.pivot.y * GRAFIKI.doktor.skala;
+  const sx = GRAFIKI.doktor.x + REKA.bark.x * GRAFIKI.doktor.skala;
+  const sy = GRAFIKI.doktor.y + REKA.bark.y * GRAFIKI.doktor.skala;
   const obraz = img.doktorReka;
   ctx.save();
   ctx.translate(sx, sy);
@@ -583,6 +585,14 @@ function odswiezDzwiek() {
 btnDzwiek.addEventListener("click", () => {
   stan.dzwiek = !stan.dzwiek;
   localStorage.setItem("gabinet_dzwiek", stan.dzwiek ? "1" : "0");
+  odswiezDzwiek();
+  if (stan.dzwiek) dzwiekDing();
+});
+odswiezDzwiek();
+</script>
+</body>
+</html>
+k ? "1" : "0");
   odswiezDzwiek();
   if (stan.dzwiek) dzwiekDing();
 });
