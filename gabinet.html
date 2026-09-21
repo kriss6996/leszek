@@ -222,8 +222,10 @@
     <div id="widok"><canvas id="gra" width="1376" height="768" aria-label="Gabinet doktora — dotknij, aby oklepać plecy pacjenta"></canvas></div>
     <button id="btn-oklep" disabled>Oklep plecy<small>Dotykaj w równym rytmie • idealnie co 0,6 sekundy</small></button>
 
+    <audio id="muzyka-gabinetu" src="leszek.mp4" loop preload="auto" aria-label="Muzyka gabinetu"></audio>
+
     <div id="przyciski">
-      <button id="btn-dzwiek" title="Dźwięk" aria-label="Dźwięk">🔊</button>
+      <button id="btn-dzwiek" title="Muzyka" aria-label="Muzyka">🔊</button>
       <button id="btn-restart" title="Od nowa" aria-label="Rozpocznij od nowa">🔁</button>
       <a class="dom" href="index.html" title="Strona główna">🏠 Strona główna</a>
     </div>
@@ -320,6 +322,8 @@ const MINA_KALM = 0.9;    // s — tak dlugo po uderzeniu pacjent ma "zaskoczona
 const cv = document.getElementById("gra");
 const ctx = cv.getContext("2d");
 const W = cv.width, H = cv.height;
+
+const muzykaGabinetu = document.getElementById("muzyka-gabinetu");
 
 const stan = {
   faza: "start",            // start | gra | koniec
@@ -650,6 +654,17 @@ function aktualizujHud() {
   } else cw.classList.remove("on");
 }
 
+function odtworzMuzyke() {
+  if (!stan.dzwiek) return;
+  muzykaGabinetu.play().catch(() => {
+    // Odtwarzanie zostanie ponowione przy kolejnym kliknięciu użytkownika.
+  });
+}
+
+function zatrzymajMuzyke() {
+  muzykaGabinetu.pause();
+}
+
 function startGry() {
   stan.faza = "gra";
   stan.punkty = 0; stan.seria = 0; stan.mnoznik = 1;
@@ -665,6 +680,7 @@ function startGry() {
   document.getElementById("czas-wartosc").classList.remove("duzo");
   if (stan.dzwiek) {
     try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
+    odtworzMuzyke();
   }
 }
 
@@ -756,7 +772,12 @@ btnDzwiek.addEventListener("click", () => {
   stan.dzwiek = !stan.dzwiek;
   localStorage.setItem("gabinet_dzwiek", stan.dzwiek ? "1" : "0");
   odswiezDzwiek();
-  if (stan.dzwiek) dzwiekDing();
+  if (stan.dzwiek) {
+    dzwiekDing();
+    odtworzMuzyke();
+  } else {
+    zatrzymajMuzyke();
+  }
 });
 odswiezDzwiek();
 </script>
