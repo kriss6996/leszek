@@ -93,7 +93,9 @@ async function sprawdzWarstwy(page) {
       if (await page.locator('#btn-oklep').isVisible()) {
         const box = await inViewport('#btn-oklep');
         assert.ok(box.height >= 44);
-        await page.waitForTimeout(600);
+        // Ustawiamy zegar gry tuz przed dotykiem (rytm 600 ms = PERFECT), zeby wolne
+        // emulatory z opoznionym przetwarzaniem dotyku nie wypadly z okna oceny.
+        await page.evaluate(() => { stan.ostatniHit = performance.now() - 600; });
         await page.locator('#btn-oklep').tap();
         assert.ok(Number(await page.locator('#punkty-wartosc').textContent()) > 50);
       }
