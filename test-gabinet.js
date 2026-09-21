@@ -170,3 +170,78 @@ el('btn-ponownie')._fn.click();
 assert.equal(el('btn-oklep').disabled, false);
 assert.equal(+el('czas-wartosc').textContent, 60);
 console.log('✅ regresje: pełny HTML, skalowanie, geometria ręki, przycisk dotykowy i timer');
+
+// Warstwy: całe ramię za tułowiem, tylko dłoń z mankietem nad pacjentem.
+const konfiguracja = vm.runInContext('({ reka: REKA, grafiki: GRAFIKI, obrazy: img })', sandbox);
+const { reka, grafiki, obrazy } = konfiguracja;
+const skalaReki = reka.skala * grafiki.doktor.skala;
+const przesuniecieReki = [-reka.pivot.x * skalaReki, -reka.pivot.y * skalaReki];
+const bark = [grafiki.doktor.x + reka.bark.x * grafiki.doktor.skala,
+              grafiki.doktor.y + reka.bark.y * grafiki.doktor.skala];
+const probkiWarstw = [
+  ['ekran startowy', 'start', 1000, -99],
+  ['spoczynek', 'gra', 2000, -99],
+  ['zamach', 'gra', 2045, 2000],
+  ['uniesienie', 'gra', 2090, 2000],
+  ['docisk', 'gra', 2170, 2000],
+  ['powrót', 'gra', 2230, 2000],
+  ['odbicie', 'gra', 2330, 2000],
+  ['po animacji', 'gra', 3000, 2000],
+  ['ekran końcowy', 'koniec', 2170, 2000],
+];
+for (const [nazwa, faza, czas, hit] of probkiWarstw) {
+  aktualnyCzas = czas;
+  vm.runInContext(`
+    stan.faza = '${faza}'; stan.czasStart = 0; stan.ostatniHit = ${hit};
+    pacjent.ostatniHit = ${hit}; pacjent.bob = 0; pacjent.predkosc = 0;
+    poprzedniCzas = ${czas};
+    dymki.length = 0; napisy.length = 0; czastki.length = 0;
+    dodajDymek('dymek testowy', '#fff');
+    dodajNapis('napis testowy', '#fff');
+    dodajCzastki(1, '#fff');
+  `, sandbox);
+  ctxCalls.length = 0;
+  rafFn(czas);
+
+  const rysowania = ctxCalls.filter(([metoda]) => metoda === 'drawImage').map(([, args]) => args);
+  const mina = vm.runInContext('pacjent.mina', sandbox);
+  const plikPacjenta = mina === 'reakcja' ? 'pacjent_reakcja.png'
+                    : mina === 'relaks' ? 'pacjent_relaks.png' : 'pacjent.png';
+  assert.deepEqual(rysowania.map(([obraz]) => obraz._src.split('/').pop().split('?')[0]),
+    ['tlo.png', 'ramie_masaz.png', 'doktor_masaz.png', 'kozetka.png', plikPacjenta, 'ramie_masaz.png'], nazwa);
+
+  const ramie = rysowania[1], dlon = rysowania[5];
+  assert.deepEqual(ramie.slice(1), [...przesuniecieReki,
+    obrazy.doktorReka.width * skalaReki, obrazy.doktorReka.height * skalaReki], nazwa);
+  assert.deepEqual(dlon.slice(1), [0, 0, 100, 120, ...przesuniecieReki, 100 * skalaReki, 120 * skalaReki],
+    `${nazwa}: wycinek nie może zawierać nasady ramienia`);
+  assert.deepEqual(ctxCalls.filter(([metoda]) => metoda === 'translate').map(([, args]) => args), [bark, bark], nazwa);
+  const kat = vm.runInContext(`katRamienia(${czas}, stan.faza === 'gra' && ${czas - hit} < 450 ? ${hit} : null)
+    * Math.PI / 180 - PHI0`, sandbox);
+  assert.deepEqual(ctxCalls.filter(([metoda]) => metoda === 'rotate').map(([, args]) => args), [[kat], [kat]], nazwa);
+
+  // Pozycje i skale postaci pozostają niezmienione.
+  assert.deepEqual(rysowania[2].slice(1), [680, 175, obrazy.doktor.width * 0.85, obrazy.doktor.height * 0.85], nazwa);
+  assert.deepEqual(rysowania[3].slice(1), [330, 450, obrazy.kozetka.width * 0.58, obrazy.kozetka.height * 0.58], nazwa);
+  assert.deepEqual(rysowania[4].slice(1), [350, 337, rysowania[4][0].width * 0.48, rysowania[4][0].height * 0.48], nazwa);
+
+  const ostatniObraz = ctxCalls.findLastIndex(([metoda]) => metoda === 'drawImage');
+  for (const tekst of ['dymek testowy', 'napis testowy']) {
+    assert.ok(ctxCalls.findIndex(([metoda, args]) => metoda === 'fillText' && args[0] === tekst) > ostatniObraz,
+      `${nazwa}: ${tekst} musi być nad dłonią`);
+  }
+  assert.ok(ctxCalls.findIndex(([metoda]) => metoda === 'arc') > ostatniObraz, `${nazwa}: cząstki nad dłonią`);
+}
+
+// Brak PNG nie może powodować ponownego rysowania zastępczego ramienia na wierzchu.
+for (const stanObrazu of [{ complete: false, _blad: false }, { complete: true, _blad: true }]) {
+  Object.assign(obrazy.doktorReka, stanObrazu);
+  ctxCalls.length = 0;
+  vm.runInContext('rysujReke(REKA.katSpoczynek, true)', sandbox);
+  assert.equal(ctxCalls.some(([metoda]) => metoda === 'drawImage' || metoda === 'fillRect'), false);
+  ctxCalls.length = 0;
+  vm.runInContext('rysujReke(REKA.katSpoczynek)', sandbox);
+  assert.equal(ctxCalls.filter(([metoda]) => metoda === 'fillRect').length, 1);
+}
+Object.assign(obrazy.doktorReka, { complete: true, _blad: false });
+console.log('✅ warstwy: spoczynek, fazy animacji, wycinek dłoni, wspólny obrót i skala, efekty na wierzchu');
