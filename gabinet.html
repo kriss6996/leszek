@@ -21,83 +21,79 @@
     inset: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Scena ma dokladnie zachowany proporcje 1376:768 i miesci sie w oknie.
-     Domyślnie ustawi ją JS (dopasuj()) — CSS poniżej to zabezpieczenie. */
+  /* Interfejs poza sceną: cały gabinet pozostaje widoczny również w pionie. */
   #stage {
-    position: relative;
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%; height: 100dvh;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+             max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    display: flex; justify-content: center;
     user-select: none; -webkit-user-select: none;
-    display: flex; align-items: center; justify-content: center;
   }
   #rama {
-    position: relative;
-    /* 16:9-ish canvas 1376x768; JS poda dokladne piksele */
-    max-width: 100%;
-    max-height: 100%;
+    position: relative; width: 100%; max-width: 1376px; min-width: 0; min-height: 0;
+    display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 10px;
+  }
+  #pasek-wynikow {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 16px; color: #fff; background: #193c2e; border-radius: 14px;
+  }
+  #tytul-gabinetu { text-align: center; font-weight: 700; color: #b6e7ce; }
+  #tytul-gabinetu small { display: block; margin-top: 4px; font-weight: 400; }
+  .hud { min-width: 72px; }
+  #hud-prawo { text-align: right; }
+  .hud .etykieta { font-size: 11px; letter-spacing: .12em; opacity: .85; text-transform: uppercase; }
+  .hud .wartosc { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; line-height: 1.1; }
+  #combo-wrap { min-height: 22px; opacity: 0; transition: opacity .15s; }
+  #combo-wrap.on { opacity: 1; }
+  #combo-wartosc { color: #ffd23f; font-size: 16px; }
+  #czas-wartosc.duzo { color: #ff6b6b; }
+  #widok {
+    min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center;
+    background: #142e23; border-radius: 12px; overflow: hidden;
   }
   canvas {
-    display: block;
-    width: 100%; height: 100%;
-    cursor: pointer;
-    touch-action: none;
-    border-radius: 6px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.55);
+    display: block; max-width: 100%; max-height: 100%; object-fit: contain;
+    cursor: pointer; touch-action: none; border-radius: 6px;
   }
-
-  /* ---------- HUD ---------- */
-  .hud {
-    position: absolute; z-index: 5; color: #fff; pointer-events: none;
-    text-shadow: 0 2px 4px rgba(0,0,0,.55);
+  #btn-oklep {
+    width: 100%; min-height: 64px; padding: 12px; border: 1px solid #4db981; border-radius: 14px;
+    background: #23774d; color: #fff; font: inherit; font-size: 20px; font-weight: 800;
+    cursor: pointer; touch-action: manipulation;
   }
-  #hud-lewo  { top: 1.6%; left: 2%; }
-  #hud-prawo { top: 1.6%; right: 2%; text-align: right; }
-  .hud .etykieta { font-size: clamp(9px, 1.3vw, 15px); letter-spacing: .12em; opacity: .85; text-transform: uppercase; }
-  .hud .wartosc  { font-size: clamp(20px, 3.4vw, 40px); font-weight: 800; line-height: 1.05; }
-  #combo-wrap { margin-top: .2em; opacity: 0; transition: opacity .15s; }
-  #combo-wrap.on { opacity: 1; }
-  #combo-wartosc { color: #ffd23f; }
-  #czas-wartosc.duzo { color: #ff6b6b; }
-
-  #przyciski {
-    position: absolute; z-index: 6; bottom: 2%; right: 2%;
-    display: flex; gap: .5em; align-items: center;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+  #btn-oklep small { display: block; font-size: 12px; font-weight: 400; margin-top: 5px; color: #d4f8e3; }
+  #btn-oklep:active { background: #319b67; }
+  #przyciski { display: flex; gap: 8px; justify-content: center; }
   #przyciski button, #przyciski a.dom {
-    font: inherit; font-weight: 700; font-size: clamp(11px, 1.6vw, 18px);
-    min-height: 40px;
-    padding: .45em .9em; border-radius: 999px; border: 2px solid rgba(255,255,255,.35);
-    background: rgba(0,0,0,.45); color: #fff; cursor: pointer;
-    text-shadow: 0 1px 2px rgba(0,0,0,.6);
-    text-decoration: none; display: inline-flex; align-items: center;
+    font: inherit; font-weight: 700; font-size: 14px; min-height: 44px; min-width: 44px;
+    padding: 8px 12px; border-radius: 999px; border: 1px solid #537664;
+    background: #193c2e; color: #fff; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
   }
-  #przyciski button:hover, #przyciski a.dom:hover { background: rgba(0,0,0,.65); border-color: #fff; }
-
-  /* ---------- podpowiedz obrotu telefonu ---------- */
-  #obrot-podpowiedz {
-    display: none;
-    position: absolute; z-index: 7; left: 50%; bottom: calc(2% + env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    background: rgba(0,0,0,.6); color: #fff;
-    font-size: clamp(11px, 1.6vw, 15px); font-weight: 700;
-    padding: .5em 1em; border-radius: 999px;
-    white-space: nowrap; pointer-events: none;
-    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  #przyciski button:hover, #przyciski a.dom:hover { background: #285b43; }
+  button:focus-visible, a:focus-visible { outline: 3px solid #ffd23f; outline-offset: 2px; }
+  @media (max-width: 420px) {
+    #tytul-gabinetu { font-size: 13px; }
+    #tytul-gabinetu small { font-size: 11px; }
+    #pasek-wynikow { padding: 10px; gap: 6px; }
   }
-  @media (orientation: portrait) and (max-width: 700px) {
-    #obrot-podpowiedz { display: block; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    #rama { grid-template-rows: auto minmax(0, 1fr) auto; gap: 4px; }
+    #pasek-wynikow { padding: 4px 12px; }
+    .hud .wartosc { font-size: 24px; }
+    #combo-wrap { min-height: 0; height: 18px; }
+    #btn-oklep { display: none; }
   }
 
   /* ---------- ekrany (start / koniec) ---------- */
   .ekran {
     position: absolute; inset: 0; z-index: 10;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 1em; text-align: center; color: #fff; padding: 1em;
+    display: flex; flex-direction: column; align-items: center; justify-content: safe center;
+    overflow-y: auto; gap: 1em; text-align: center; color: #fff; padding: 1em;
     background: rgba(8, 30, 22, .78);
     -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
     border-radius: 6px;
   }
+  .ekran > * { flex-shrink: 0; }
   .ekran.ukryty { display: none; }
   .ekran h1 {
     margin: 0; font-size: clamp(20px, 4.6vw, 54px); line-height: 1.1;
@@ -127,35 +123,50 @@
     text-shadow: 0 4px 0 rgba(0,0,0,.35); line-height: 1;
   }
   #rekord-info { color: #7dffb9; font-weight: 700; }
+  @media (orientation: portrait) and (max-width: 700px) {
+    .ekran h1 { font-size: clamp(24px, 6vw, 34px); }
+    .ekran p { font-size: 16px; }
+    .ekran .male { font-size: 13px; }
+    #combo-wrap .etykieta { display: none; }
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .ekran { gap: 8px; }
+    .ekran h1 { font-size: 24px; }
+    .ekran p { font-size: 13px; }
+  }
 </style>
 </head>
 <body>
 <div id="stage">
   <div id="rama">
-    <canvas id="gra" width="1376" height="768"></canvas>
+    <header id="pasek-wynikow">
 
     <div class="hud" id="hud-lewo">
       <div class="etykieta">Punkty</div>
       <div class="wartosc" id="punkty-wartosc">0</div>
-      <div id="combo-wrap"><span class="etykieta">Seria</span> <span class="wartosc" id="combo-wartosc" style="font-size:clamp(14px,2.2vw,26px)">x1.0</span></div>
+      <div id="combo-wrap"><span class="etykieta">Seria</span> <span class="wartosc" id="combo-wartosc">x1.0</span></div>
     </div>
+    <div id="tytul-gabinetu">Gabinet Dr. Leszka<small>Mistrz Oklepywania</small></div>
     <div class="hud" id="hud-prawo">
       <div class="etykieta">Czas</div>
       <div class="wartosc" id="czas-wartosc">60</div>
     </div>
 
+    </header>
+    <div id="widok"><canvas id="gra" width="1376" height="768" aria-label="Gabinet doktora — dotknij, aby oklepać plecy pacjenta"></canvas></div>
+    <button id="btn-oklep" disabled>Oklep plecy<small>Dotykaj w równym rytmie • idealnie co 0,6 sekundy</small></button>
+
     <div id="przyciski">
-      <button id="btn-dzwiek" title="Dźwięk">🔊</button>
-      <button id="btn-restart" title="Od nowa">🔁</button>
+      <button id="btn-dzwiek" title="Dźwięk" aria-label="Dźwięk">🔊</button>
+      <button id="btn-restart" title="Od nowa" aria-label="Rozpocznij od nowa">🔁</button>
       <a class="dom" href="index.html" title="Strona główna">🏠 Strona główna</a>
     </div>
 
-    <div id="obrot-podpowiedz">🔄 Obróć telefon poziomo — będzie wygodniej!</div>
 
     <div class="ekran" id="ekran-start">
       <h1>🖐️ Gabinet Dr. Leszka<br>Mistrz Oklepywania</h1>
       <p>Pacjent leży na kozetce i czeka na <strong>relaksujący masaż pleców</strong>.
-         Klikaj (lub tapnij / spacja), aby oklepać go dłonią — ale w dobrym rytmie!</p>
+         Dotykaj przycisku „Oklep plecy” lub gabinetu (na komputerze także spacja), aby oklepać go dłonią — ale w dobrym rytmie!</p>
       <p class="male">⏱️ 60 sekund &nbsp;•&nbsp; 🎯 idealny rytm = <b>PERFECT</b> i mnożnik serii &nbsp;•&nbsp; 🚫 zbyt szybki spam = strata serii</p>
       <button class="przycisk-duzy" id="btn-start">▶ Start</button>
       <a class="przycisk-dom" href="index.html">🏠 Powrót do strony głównej</a>
@@ -184,30 +195,39 @@ const KATALOG_GRAFIK = "images/gabinet/";
 
 const GRAFIKI = {
   tlo:              { plik: "tlo.png" },
-  kozetka:          { plik: "kozetka.png",   x: 145, y: 345, skala: 0.62 },
-  pacjent:          { plik: "pacjent.png",   x: 300, y: 353, skala: 0.44 },
+  kozetka:          { plik: "kozetka.png",   x: 330, y: 450, skala: 0.58 },
+  pacjent:          { plik: "pacjent.png",   x: 350, y: 337, skala: 0.48 },
   pacjentReakcja:   { plik: "pacjent_reakcja.png" },
   pacjentRelaks:    { plik: "pacjent_relaks.png" },
-  doktor:           { plik: "doktor.png",    x: 570, y: 195, skala: 0.893 },
-  doktorReka:       { plik: "doktor_reka.png" },
+  doktor:           { plik: "doktor_masaz.png",    x: 680, y: 175, skala: 0.85 },
+  doktorReka:       { plik: "ramie_masaz.png" },
   doktorCalosc:     { plik: "doktor_calosc.png" }, // zapasowa, nieuzywana w animacji
 };
 
 /* Geometria ramienia (PRAWA reka doktora — ta od strony pacjenta):
    pivot  = punkt mocowania rekawa w sprajcie REKI (staly punkt obrotu),
-   bark   = gniazdo barku w sprajcie CIALA (doktor.png) — tam "wpina sie" reka,
+   bark   = gniazdo barku w sprajcie CIALA (doktor_masaz.png) — tam "wpina sie" reka,
    dlon   = srodek dloni (w px sprite'a), katy ekranowe (0=prawo, 90=dol, -90=gora). */
 const REKA = {
-  pivot: { x: 350, y: 500  },
-  bark:  { x: 203, y: 375 },
-  dlon:  { x: 55,  y: 100 },
-  skala: 1.027,
-  katSpoczynek:  -156.0,  // dlon oparta o plecy pacjenta
-  katUniesienie: -140.0,  // zamach (reka unosi sie nad plecy)
-  katDocisk:     -160.5   // docisk = "klaps" masazu
+  pivot: { x: 164, y: 204 },
+  bark:  { x: 60, y: 205 },
+  dlon:  { x: 45, y: 64 },
+  skala: 1.09,
+  katSpoczynek: 158,  // dłoń nad plecami, ramię wychodzi z barku
+  katUniesienie: 178,
+  katDocisk: 154
 };
 
-const KONTAKT = { x: 525, y: 423 };        // punkt na plecach pacjenta (efekty)
+// Punkt kontaktu wyliczany z tej samej geometrii co animowana dłoń.
+function pozycjaDloni(kat) {
+  const dlugosc = Math.hypot(REKA.dlon.x - REKA.pivot.x, REKA.dlon.y - REKA.pivot.y)
+                 * REKA.skala * GRAFIKI.doktor.skala;
+  return {
+    x: GRAFIKI.doktor.x + REKA.bark.x * GRAFIKI.doktor.skala + Math.cos(kat * Math.PI / 180) * dlugosc,
+    y: GRAFIKI.doktor.y + REKA.bark.y * GRAFIKI.doktor.skala + Math.sin(kat * Math.PI / 180) * dlugosc,
+  };
+}
+const KONTAKT = pozycjaDloni(REKA.katDocisk);
 const CZAS_GRY = 60;                        // sekundy
 
 const OCENY = [
@@ -237,20 +257,17 @@ const stan = {
   dzwiek: localStorage.getItem("gabinet_dzwiek") !== "0",
 };
 
-/* ---------- responsywnosc: scena zawsze na srodku, w proporcji 1376:768 ---------- */
+/* ---------- Pełna scena „contain”; UI nie zajmuje miejsca na płótnie. ---------- */
 function dopasuj() {
-  const stage = document.getElementById("stage");
-  const rama = document.getElementById("rama");
-  const dostepneW = window.innerWidth;
-  const dostepneH = window.innerHeight;
-  const proporcje = W / H;
-  let szer = dostepneW, wys = szer / proporcje;
-  if (wys > dostepneH) { wys = dostepneH; szer = wys * proporcje; }
-  rama.style.width = Math.floor(szer) + "px";
-  rama.style.height = Math.floor(wys) + "px";
+  const widok = document.getElementById("widok");
+  const skala = Math.min(widok.clientWidth / W, widok.clientHeight / H);
+  cv.style.width = Math.floor(W * skala) + "px";
+  cv.style.height = Math.floor(H * skala) + "px";
 }
 window.addEventListener("resize", dopasuj);
 window.addEventListener("orientationchange", dopasuj);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", dopasuj);
+if (window.ResizeObserver) new ResizeObserver(dopasuj).observe(document.getElementById("widok"));
 dopasuj();
 
 /* ---------- wczytywanie grafik (znacznik ?v= zawsze swiezy) ---------- */
@@ -501,6 +518,9 @@ function startGry() {
   document.getElementById("ekran-start").classList.add("ukryty");
   document.getElementById("ekran-koniec").classList.add("ukryty");
   aktualizujHud();
+  document.getElementById("btn-oklep").disabled = false;
+  document.getElementById("czas-wartosc").textContent = CZAS_GRY;
+  document.getElementById("czas-wartosc").classList.remove("duzo");
   if (stan.dzwiek) {
     try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
   }
@@ -508,6 +528,7 @@ function startGry() {
 
 function koniecGry() {
   stan.faza = "koniec";
+  document.getElementById("btn-oklep").disabled = true;
   const wynik = stan.punkty;
   document.getElementById("wynik-koniec").textContent = wynik;
   const opinie = [
@@ -540,14 +561,14 @@ function klatka(czas) {
   rysuj(img.tlo, 0, 0);
 
   krokPacjenta(dt, czas);
+  rysuj(img.doktor, GRAFIKI.doktor.x, GRAFIKI.doktor.y, GRAFIKI.doktor.skala);
   rysujPacjenta();
 
   let hitCzas = null;
   if (czas - stan.ostatniHit < 450) hitCzas = stan.ostatniHit;
   const kat = katRamienia(czas, stan.faza === "gra" ? hitCzas : null);
 
-  rysujReke(kat);   // reka POD cialem doktora (naturalne polaczenie w barku)
-  rysuj(img.doktor, GRAFIKI.doktor.x, GRAFIKI.doktor.y, GRAFIKI.doktor.skala);
+  rysujReke(kat);   // dłoń nad pacjentem; bark pozostaje nieruchomy
 
   if (stan.faza === "gra") {
     const zostalo = Math.max(0, CZAS_GRY - (czas - stan.czasStart) / 1000);
@@ -567,7 +588,10 @@ cv.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   uderz(performance.now());
 });
+document.getElementById("btn-oklep").addEventListener("click", () => uderz(performance.now()));
 window.addEventListener("keydown", (e) => {
+  if (e.target.closest && e.target.closest("button, a")) return;
+  if (e.repeat) return;
   if (e.code === "Space" || e.code === "Enter") {
     if (stan.faza === "gra") { e.preventDefault(); uderz(performance.now()); }
     else if (stan.faza === "start") { e.preventDefault(); startGry(); }
@@ -581,18 +605,11 @@ document.getElementById("btn-restart").addEventListener("click", () => {
 const btnDzwiek = document.getElementById("btn-dzwiek");
 function odswiezDzwiek() {
   btnDzwiek.textContent = stan.dzwiek ? "🔊" : "🔇";
+  btnDzwiek.setAttribute("aria-pressed", String(stan.dzwiek));
 }
 btnDzwiek.addEventListener("click", () => {
   stan.dzwiek = !stan.dzwiek;
   localStorage.setItem("gabinet_dzwiek", stan.dzwiek ? "1" : "0");
-  odswiezDzwiek();
-  if (stan.dzwiek) dzwiekDing();
-});
-odswiezDzwiek();
-</script>
-</body>
-</html>
-k ? "1" : "0");
   odswiezDzwiek();
   if (stan.dzwiek) dzwiekDing();
 });

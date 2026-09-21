@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const assert = require("node:assert/strict");
 
 const html = fs.readFileSync(path.join(__dirname, "gabinet.html"), "utf-8");
 const kod = html.match(/<script>([\s\S]*?)<\/script>/)[1];
@@ -12,6 +13,8 @@ function atrapaElement() {
   const klasy = new Set();
   return {
     textContent: "", style: {},
+    width: 1376, height: 768, clientWidth: 390, clientHeight: 500,
+    setAttribute(name, value) { (this.attributes ||= {})[name] = value; },
     getContext: () => ctxStub,
     classList: {
       add: (c) => klasy.add(c),
@@ -134,3 +137,36 @@ if (razyDraw < 100 || razyRot < 100) throw new Error("za malo rysowania: " + raz
 console.log("✅ render OK: drawImage x" + razyDraw + ", rotate x" + razyRot);
 
 console.log("\nWSZYSTKIE TESTY LOGIKI ZALICZONE 🎉");
+
+// Regresja: urwany skrypt po </html> wypychał scenę jako drugi element flex.
+assert.equal(html.match(/<\/html>/g).length, 1);
+assert.equal(html.split('</html>')[1].trim(), '');
+
+// Skalowanie całej sceny (bez kadrowania) w obu orientacjach.
+for (const [width, height] of [[320, 300], [390, 550], [844, 200], [1376, 768]]) {
+  Object.assign(el('widok'), { clientWidth: width, clientHeight: height });
+  vm.runInContext('dopasuj()', sandbox);
+  const w = parseFloat(el('gra').style.width), h = parseFloat(el('gra').style.height);
+  assert.ok(w > 0 && h > 0 && w <= width && h <= height);
+  assert.ok(Math.abs(w - h * 1376 / 768) < 2);
+}
+
+// Pivot i bark muszą należeć do właściwych PNG, a dłoń trafić w plecy.
+const geometria = vm.runInContext(`({ reka: REKA, kontakt: KONTAKT,
+  podniesiona: pozycjaDloni(REKA.katUniesienie) })`, sandbox);
+assert.ok(geometria.reka.pivot.x < 200 && geometria.reka.pivot.y < 234);
+assert.ok(geometria.reka.bark.y < 250, 'mocowanie w barku, nie przy biodrze');
+assert.ok(geometria.kontakt.x > 540 && geometria.kontakt.x < 600);
+assert.ok(geometria.kontakt.y > 400 && geometria.kontakt.y < 435);
+assert.ok(geometria.podniesiona.y < geometria.kontakt.y - 40);
+
+aktualnyCzas += 600;
+const przedPrzyciskiem = +el('punkty-wartosc').textContent;
+el('btn-oklep')._fn.click();
+assert.ok(+el('punkty-wartosc').textContent > przedPrzyciskiem);
+vm.runInContext('koniecGry()', sandbox);
+assert.equal(el('btn-oklep').disabled, true);
+el('btn-ponownie')._fn.click();
+assert.equal(el('btn-oklep').disabled, false);
+assert.equal(+el('czas-wartosc').textContent, 60);
+console.log('✅ regresje: pełny HTML, skalowanie, geometria ręki, przycisk dotykowy i timer');

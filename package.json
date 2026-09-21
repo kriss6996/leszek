@@ -1,0 +1,11 @@
+{
+  "name": "leszek-games",
+  "private": true,
+  "scripts": {
+    "test": "node test-gabinet.js",
+    "test:browser": "node test-gabinet-browser.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

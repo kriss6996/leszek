@@ -85,15 +85,17 @@ wgraj plik o **tej samej nazwie** („Add file → Upload files”) i odśwież 
 | `pacjent.png`              | pacjent leżący na kozetce — mina spokojna | pełny kadr ciała |
 | `pacjent_reakcja.png`      | pacjent — mina „zaskoczony” (po oklepaniu) | **ten sam kadr co `pacjent.png`**, inna tylko mina |
 | `pacjent_relaks.png`       | pacjent — mina „błogi relaks” | **ten sam kadr co `pacjent.png`**, inna tylko mina |
-| `doktor.png`               | Doktor Leszek w fartuchu (ciało bez animowanej ręki) | stoi obok kozetki |
-| `doktor_reka.png`          | prawa ręka doktora (animowana) | obracana wokół barku — patrz niżej |
+| `doktor.png`               | oryginalna warstwa ciała | zachowana, nieużywana w animacji |
+| `doktor_masaz.png`         | ciało z jedną ręką w spoczynku | aktualna warstwa ciała |
+| `ramie_masaz.png`          | samo animowane ramię | obracane wokół barku |
+| `doktor_reka.png`          | oryginalna ręka z fragmentem tułowia | źródło do przygotowania ramienia |
 | `doktor_calosc.png`        | Doktor Leszek z obiema rękami | zapasowa, nieużywana w animacji |
 
 ### Ważne przy podmianie
 
 - **Miny pacjenta** (`pacjent*.png`) muszą mieć **identyczny kadr i pozycję głowy** —
   gra rysuje jedną z nich w tym samym miejscu (różni się tylko twarz).
-- **`doktor_reka.png`** jest obracana wokół punktu barku zapisanego w `gabinet.html`
+- **`ramie_masaz.png`** jest obracana wokół punktu barku zapisanego w `gabinet.html`
   (sekcja `REKA.pivot`). Jeśli wgrasz rękę w innej pozycji, dostosuj `pivot`/`dlon`
   oraz kąty (`katSpoczynek`, `katUniesienie`) w pliku `gabinet.html`.
 - Pozycje wszystkich warstw (x, y, skala) są w sekcji `GRAFIKI` na początku
@@ -105,3 +107,33 @@ wgraj plik o **tej samej nazwie** („Add file → Upload files”) i odśwież 
 python3 -m http.server 8000
 # potem w przeglądarce: http://localhost:8000/gabinet.html
 ```
+
+### Poprawiona scena i układ telefonu
+
+Gra używa teraz dwóch przygotowanych warstw: `doktor_masaz.png` (ciało z drugą
+ręką w spoczynku) i `ramie_masaz.png` (samo animowane ramię, bez fragmentu tułowia).
+Oryginalne `doktor.png`, `doktor_calosc.png` i `doktor_reka.png` zostały zachowane.
+Aby ponownie przygotować warstwy z oryginałów, uruchom
+`python scripts/prepare-gabinet-sprites.py` (wymaga biblioteki Pillow).
+Po zmianie kształtu grafik sprawdź punkty `REKA.pivot`, `REKA.bark`, `REKA.dlon`.
+
+Cały gabinet zachowuje proporcje **1376×768**, bez przycinania i rozciągania.
+Punktacja, czas i przyciski znajdują się poza płótnem. W pionie dostępny jest duży
+przycisk **Oklep plecy**; można również dotykać bezpośrednio gabinetu.
+Układ uwzględnia `100dvh`, bezpieczne obszary telefonu i zmianę orientacji.
+Wolne miejsce wokół poziomej sceny jest celowe — dzięki temu w pionie widać cały pokój.
+
+### Testy regresji gabinetu
+
+```bash
+node test-gabinet.js          # logika, skalowanie i geometria ramienia; bez zależności
+npm ci
+npx playwright install --with-deps chromium
+python3 -m http.server 8000   # w osobnym terminalu
+npm run test:browser
+```
+
+Test przeglądarkowy sprawdza siedem rozmiarów od 320×568 do 1376×900:
+ekran startowy i końcowy, brak przycinania, proporcje sceny, HUD poza płótnem,
+sterowanie dotykowe, restart i zmianę orientacji. Opcjonalnie ustaw `GABINET_URL`
+lub `CHROMIUM_EXECUTABLE_PATH`, żeby użyć innego serwera/przeglądarki Chromium.
