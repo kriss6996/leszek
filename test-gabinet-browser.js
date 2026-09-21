@@ -6,7 +6,7 @@ const url = process.env.GABINET_URL || 'http://127.0.0.1:8000/gabinet.html';
 
 // Rejestrujemy rzeczywiste drawImage i macierze Canvas dla deterministycznych faz ruchu.
 async function sprawdzWarstwy(page) {
-  const klatki = await page.evaluate(() => {
+  const dane = await page.evaluate(() => {
     const drawImage = ctx.drawImage, raf = window.requestAnimationFrame;
     const rysowania = [], wyniki = [];
     ctx.drawImage = function(obraz, ...args) {
@@ -31,13 +31,16 @@ async function sprawdzWarstwy(page) {
         klatka(czas);
         wyniki.push({ nazwa, rysowania: rysowania.slice() });
       }
-      return wyniki;
+      return { wyniki, okno: OKNO, W, H };
     } finally {
       ctx.drawImage = drawImage;
       window.requestAnimationFrame = raf;
     }
   });
-  const skala = 1.09 * 0.85;
+  const klatki = dane.wyniki;
+  const kamera = [dane.W / dane.okno.w, 0, 0, dane.H / dane.okno.h,
+                  -dane.okno.x * (dane.W / dane.okno.w), -dane.okno.y * (dane.H / dane.okno.h)];
+  const skala = await page.evaluate(() => REKA.skala * GRAFIKI.doktor.skala);
   for (const { nazwa, rysowania } of klatki) {
     const pacjent = rysowania[4].plik;
     assert.ok(['pacjent.png', 'pacjent_relaks.png', 'pacjent_reakcja.png'].includes(pacjent), nazwa);
@@ -48,7 +51,8 @@ async function sprawdzWarstwy(page) {
     assert.deepEqual(dlon.args, [0, 0, 100, 120, -164 * skala, -204 * skala, 100 * skala, 120 * skala], nazwa);
     assert.deepEqual(dlon.macierz, ramie.macierz, `${nazwa}: wspólny obrót i bark`);
     for (const i of [0, 2, 3, 4]) {
-      assert.deepEqual(rysowania[i].macierz, [1, 0, 0, 1, 0, 0], `${nazwa}: transformacja ręki nie zmienia innych warstw`);
+      assert.ok(rysowania[i].macierz.every((v, j) => Math.abs(v - kamera[j]) < 1e-4),
+        `${nazwa}: transformacja ręki nie zmienia innych warstw (oczekiwano kamery ${kamera}, jest ${rysowania[i].macierz})`);
     }
   }
   assert.ok(new Set(klatki.map(k => k.rysowania[1].macierz.join(','))).size > 4, 'ramię animuje się, nie pozostaje nieruchome');
@@ -78,7 +82,8 @@ async function sprawdzWarstwy(page) {
       await inViewport('#ekran-start .przycisk-dom');
       await page.locator('#btn-start').tap();
       const canvas = await inViewport('#gra');
-      assert.ok(Math.abs(canvas.width - canvas.height * 1376 / 768) < 2, 'proporcje całego gabinetu');
+      const kadr = await page.evaluate(() => ({ w: OKNO.w, h: OKNO.h }));
+      assert.ok(Math.abs(canvas.width - canvas.height * kadr.w / kadr.h) < 2, 'proporcje widocznego kadru');
       for (const selector of ['#hud-lewo', '#hud-prawo', '#przyciski']) {
         const box = await inViewport(selector);
         assert.ok(box.y + box.height <= canvas.y + 1 || box.y >= canvas.y + canvas.height - 1, 'UI zasłania scenę');
