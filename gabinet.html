@@ -401,8 +401,8 @@ const img = {};
 for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
   const obraz = new Image();
   obraz.onerror = () => { obraz._blad = true; };
-  obraz.onload = () => {                     // znana szerokość kozetki = dobrze skrojony pasek
-    if (klucz === "kozetka" && obraz.naturalWidth) {
+  obraz.onload = () => {                    // znana szerokość kozetki = dobrze skrojony pasek
+    if (klucz === "kozetka" && obraz.naturalWidth && !obraz._blad) {
       szerokoscKozetki = obraz.naturalWidth * (GRAFIKI.kozetka.skala || 1);
     }
     dopasujPasek();
