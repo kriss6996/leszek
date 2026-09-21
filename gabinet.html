@@ -111,6 +111,34 @@
     #btn-oklep { min-height: 52px; font-size: 16px; }
   }
 
+  /* ---------- PUNKTY NAD KOZETKĄ ----------
+     Punkty i czas są NA GÓRZE, ale w obrębie szerokości kozetki: szerokość
+     i przesunięcie paska wylicza dopasujPasek() (dociąga pasek do krawędzi
+     kozetki w kadrze i utrzymuje zbieżność z letterboxem canvasu). */
+  #pasek-wynikow {
+    justify-self: center; width: 100%; min-width: 0; max-width: 100%;
+    flex-wrap: nowrap; gap: clamp(4px, 1.2vw, 14px); padding: 8px clamp(6px, 1.4vw, 16px);
+  }
+  #pasek-wynikow.wasce #tytul-gabinetu { display: none; }   /* wąsko: same liczby */
+  #pasek-wynikow.wasce .hud { flex: 1 1 auto; }
+  #pasek-wynikow.bardzo-wasce .etykieta { display: none; }   /* najwężiej: bez opisów */
+  #pasek-wynikow.bardzo-wasce #combo-wrap { display: none; }
+  #pasek-wynikow .hud { min-width: 0; flex: 0 1 auto; }
+  #pasek-wynikow .hud .wartosc {
+    font-size: clamp(14px, calc(var(--pasek-szer, 600px) * .072), 40px);
+    white-space: nowrap; line-height: 1.05;
+  }
+  #pasek-wynikow .hud .etykieta { font-size: clamp(8px, calc(var(--pasek-szer, 600px) * .021), 12px); }
+  #pasek-wynikow #tytul-gabinetu {
+    font-size: clamp(10px, calc(var(--pasek-szer, 600px) * .026), 17px);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #pasek-wynikow #tytul-gabinetu small { font-size: .82em; }
+  #pasek-wynikow #combo-wrap {
+    min-height: clamp(14px, calc(var(--pasek-szer, 600px) * .036), 22px);  /* bez skakania sceny */
+  }
+  #pasek-wynikow #combo-wartosc { font-size: clamp(10px, calc(var(--pasek-szer, 600px) * .03), 18px); }
+
   /* ---------- ekrany (start / koniec) ---------- */
   .ekran {
     position: absolute; inset: 0; z-index: 10;
@@ -239,21 +267,26 @@ const GRAFIKI = {
   pacjentRelaks:    { plik: "pacjent_relaks.png" },
   doktor:           { plik: "doktor_masaz.png",    x: 680, y: 175, skala: 0.85 },
   doktorReka:       { plik: "ramie_masaz.png" },
-  doktorCalosc:     { plik: "doktor_calosc.png" }, // zapasowa, nieuzywana w animacji
 };
 
-/* Geometria ramienia (PRAWA reka doktora — ta od strony pacjenta):
-   pivot  = punkt mocowania rekawa w sprajcie REKI (staly punkt obrotu),
-   bark   = gniazdo barku w sprajcie CIALA (doktor_masaz.png) — tam "wpina sie" reka,
-   dlon   = srodek dloni (w px sprite'a), katy ekranowe (0=prawo, 90=dol, -90=gora). */
+/* Geometria ramienia (PRAWA ręka doktora — ta od strony pacjenta):
+   pivot = punkt obrotu w sprajcie RAMIENIA, bark = gniazdo w sprajcie CIAŁA,
+   dlon  = środek dłoni (px sprajta), kąty ekranowe (0 = prawo, 90 = dół, -90 = góra).
+
+   Punkt obrotu to ŚRODEK CZERWONEGO MANKIETU w ramie_masaz.png (mankiet zajmuje
+   x 155..194, y 192..231 — zmierzono na PNG), a bark to koniec czerwonego rękawa
+   koszulki w doktor_masaz.png (lewa krawędź sylwetki 59 px przy y=138, rękaw
+   kończy się ok. y=152). Dzięki temu ramię obraca się w barku, a nie na środku
+   tułowia, i nigdy nie „odkleja” się od ramienia doktora.
+   dlon = środek dłoni, nie nadgarstek — to on ląduje na plecach pacjenta. */
 const REKA = {
-  pivot: { x: 164, y: 204 },
-  bark:  { x: 95, y: 215 },   // gniazdo w barku: dłoń w prawo, nad środkiem pleców
-  dlon:  { x: 45, y: 64 },
-  skala: 1.09,
-  katSpoczynek: 150,  // dłoń nad środkiem pleców, ramię naturalnie ukośnie z barku
-  katUniesienie: 172,
-  katDocisk: 146
+  pivot: { x: 175, y: 210 },  // środek mankietu = właściwy punkt obrotu (czerwona strzałka)
+  bark:  { x: 72, y: 152 },   // gniazdo w barku: koniec czerwonego rękawa koszulki
+  dlon:  { x: 36, y: 44 },    // środek dłoni, nie nadgarstek
+  skala: 1.0,                 // drobna, zgrabna dłoń — obrót i tak w rękawie koszulki
+  katSpoczynek: 142,          // dłoń tuż nad plecami, mankiet zgadza się z rękawem
+  katUniesienie: 156,         // zamach: dłoń w górę, nad łopatki pacjenta
+  katDocisk: 137              // uderzenie: dłoń na środku pleców (ok. x=607, y=429)
 };
 
 // Punkt kontaktu wyliczany z tej samej geometrii co animowana dłoń.
@@ -321,6 +354,32 @@ function dostepneMiejsce() {
   return { w: widok.clientWidth, h: widok.clientHeight };
 }
 
+/* Rozpiętość kozetki w kadrze (px sceny) wyznacza, gdzie stoi pasek wyników.
+   Znacznik aktualizujemy po wczytaniu PNG (onload niżej), więc podmiana grafiki
+   kozetki nie rozjedna paska ze sceną. */
+let szerokoscKozetki = 1024 * (GRAFIKI.kozetka.skala || 1);
+function zakresKozetki() {
+  const cfg = GRAFIKI.kozetka;
+  return { lewo: cfg.x, prawo: cfg.x + szerokoscKozetki, srodek: cfg.x + szerokoscKozetki / 2 };
+}
+
+/* Pasek „Punkty / Czas” na górze, ale dokładnie w obrębie szerokości kozetki. */
+function dopasujPasek() {
+  const pasek = document.getElementById("pasek-wynikow");
+  if (!pasek || !OKNO.s) return;
+  const k = zakresKozetki();
+  const kana = W * OKNO.s;                              // szerokość sceny na ekranie
+  const rama = document.getElementById("rama");
+  const dostepne = (rama && rama.clientWidth) ? rama.clientWidth : kana;
+  const szerokosc = Math.min(dostepne, Math.round((k.prawo - k.lewo) / W * kana));
+  pasek.style.width = szerokosc + "px";
+  pasek.style.setProperty("--pasek-szer", szerokosc + "px");
+  // Kozetka nie stoi w połowie kadru — przesuwamy pasek o różnicę środków.
+  pasek.style.marginLeft = Math.round((k.srodek / W - 0.5) * kana) + "px";
+  pasek.classList.toggle("wasce", szerokosc < 560);          // bez tytułu
+  pasek.classList.toggle("bardzo-wasce", szerokosc < 320);   // bez etykiet
+}
+
 function dopasuj() {
   const { w: dostW, h: dostH } = dostepneMiejsce();
   if (!dostW || !dostH) return;
@@ -328,6 +387,7 @@ function dopasuj() {
   OKNO = { x: 0, y: 0, w: W, h: H, s };
   cv.style.width = Math.floor(W * s) + "px";
   cv.style.height = Math.floor(H * s) + "px";
+  dopasujPasek();
 }
 window.addEventListener("resize", dopasuj);
 window.addEventListener("load", dopasuj);
@@ -341,6 +401,12 @@ const img = {};
 for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
   const obraz = new Image();
   obraz.onerror = () => { obraz._blad = true; };
+  obraz.onload = () => {                     // znana szerokość kozetki = dobrze skrojony pasek
+    if (klucz === "kozetka" && obraz.naturalWidth) {
+      szerokoscKozetki = obraz.naturalWidth * (GRAFIKI.kozetka.skala || 1);
+    }
+    dopasujPasek();
+  };
   obraz.src = KATALOG_GRAFIK + cfg.plik + "?v=" + Date.now();
   img[klucz] = obraz;
 }
