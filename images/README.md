@@ -117,6 +117,11 @@ Aby ponownie przygotować warstwy z oryginałów, uruchom
 `python scripts/prepare-gabinet-sprites.py` (wymaga biblioteki Pillow).
 Po zmianie kształtu grafik sprawdź punkty `REKA.pivot`, `REKA.bark`, `REKA.dlon`.
 
+Kolejność rysowania: **tło → całe ramię → tułów doktora → kozetka i pacjent →
+dłoń z mankietem → efekty**. Przednia warstwa to wyłącznie wycinek
+`ramie_masaz.png` o współrzędnych **x=0, y=0, szerokość=100, wysokość=120**,
+z tym samym pivotem, obrotem i skalą co całe ramię. Nasada rękawa pozostaje za tułowiem.
+
 Cały gabinet zachowuje proporcje **1376×768**, bez przycinania i rozciągania.
 Punktacja, czas i przyciski znajdują się poza płótnem. W pionie dostępny jest duży
 przycisk **Oklep plecy**; można również dotykać bezpośrednio gabinetu.
@@ -126,7 +131,7 @@ Wolne miejsce wokół poziomej sceny jest celowe — dzięki temu w pionie wida�
 ### Testy regresji gabinetu
 
 ```bash
-node test-gabinet.js          # logika, skalowanie i geometria ramienia; bez zależności
+node test-gabinet.js          # logika, skalowanie, geometria i warstwy; bez zależności
 npm ci
 npx playwright install --with-deps chromium
 python3 -m http.server 8000   # w osobnym terminalu
@@ -135,5 +140,9 @@ npm run test:browser
 
 Test przeglądarkowy sprawdza siedem rozmiarów od 320×568 do 1376×900:
 ekran startowy i końcowy, brak przycinania, proporcje sceny, HUD poza płótnem,
-sterowanie dotykowe, restart i zmianę orientacji. Opcjonalnie ustaw `GABINET_URL`
-lub `CHROMIUM_EXECUTABLE_PATH`, żeby użyć innego serwera/przeglądarki Chromium.
+sterowanie dotykowe, restart i zmianę orientacji. Przed i po obrocie sprawdza też
+kolejność warstw, dokładny wycinek dłoni oraz zgodność skali i macierzy obrotu
+w spoczynku i kolejnych fazach animacji. Test bez przeglądarki dodatkowo pilnuje,
+żeby efekty były nad dłonią, a zastępcze ramię przy braku PNG nie trafiało na wierzch.
+Opcjonalnie ustaw `GABINET_URL` lub `CHROMIUM_EXECUTABLE_PATH`, żeby użyć innego
+serwera/przeglądarki Chromium.

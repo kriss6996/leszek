@@ -295,7 +295,7 @@ function rysuj(obraz, x, y, skala) {
    jest dokladnie katami wektora bark->dlon na ekranie. */
 const PHI0 = Math.atan2(REKA.dlon.y - REKA.pivot.y, REKA.dlon.x - REKA.pivot.x);
 
-function rysujReke(kat) {
+function rysujReke(kat, tylkoDlon = false) {
   const sk = REKA.skala * GRAFIKI.doktor.skala;
   const sx = GRAFIKI.doktor.x + REKA.bark.x * GRAFIKI.doktor.skala;
   const sy = GRAFIKI.doktor.y + REKA.bark.y * GRAFIKI.doktor.skala;
@@ -304,9 +304,15 @@ function rysujReke(kat) {
   ctx.translate(sx, sy);
   ctx.rotate(kat * Math.PI / 180 - PHI0);
   if (obraz.complete && !obraz._blad) {
-    ctx.drawImage(obraz, -REKA.pivot.x * sk, -REKA.pivot.y * sk,
-                  obraz.width * sk, obraz.height * sk);
-  } else {
+    if (tylkoDlon) {
+      // Nad pacjentem tylko dłoń z mankietem; nasada ramienia zostaje za tułowiem.
+      ctx.drawImage(obraz, 0, 0, 100, 120,
+                    -REKA.pivot.x * sk, -REKA.pivot.y * sk, 100 * sk, 120 * sk);
+    } else {
+      ctx.drawImage(obraz, -REKA.pivot.x * sk, -REKA.pivot.y * sk,
+                    obraz.width * sk, obraz.height * sk);
+    }
+  } else if (!tylkoDlon) {
     ctx.fillStyle = "#eee"; ctx.fillRect(-14, -14, 140, 34);
   }
   ctx.restore();
@@ -561,14 +567,15 @@ function klatka(czas) {
   rysuj(img.tlo, 0, 0);
 
   krokPacjenta(dt, czas);
-  rysuj(img.doktor, GRAFIKI.doktor.x, GRAFIKI.doktor.y, GRAFIKI.doktor.skala);
-  rysujPacjenta();
-
   let hitCzas = null;
   if (czas - stan.ostatniHit < 450) hitCzas = stan.ostatniHit;
   const kat = katRamienia(czas, stan.faza === "gra" ? hitCzas : null);
 
-  rysujReke(kat);   // dłoń nad pacjentem; bark pozostaje nieruchomy
+  // Tło → ramię → tułów → kozetka i pacjent → dłoń z mankietem → efekty.
+  rysujReke(kat);
+  rysuj(img.doktor, GRAFIKI.doktor.x, GRAFIKI.doktor.y, GRAFIKI.doktor.skala);
+  rysujPacjenta();
+  rysujReke(kat, true);
 
   if (stan.faza === "gra") {
     const zostalo = Math.max(0, CZAS_GRY - (czas - stan.czasStart) / 1000);

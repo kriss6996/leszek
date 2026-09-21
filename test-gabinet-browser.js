@@ -4,6 +4,56 @@ const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const url = process.env.GABINET_URL || 'http://127.0.0.1:8000/gabinet.html';
 
+// Rejestrujemy rzeczywiste drawImage i macierze Canvas dla deterministycznych faz ruchu.
+async function sprawdzWarstwy(page) {
+  const klatki = await page.evaluate(() => {
+    const drawImage = ctx.drawImage, raf = window.requestAnimationFrame;
+    const rysowania = [], wyniki = [];
+    ctx.drawImage = function(obraz, ...args) {
+      const { a, b, c, d, e, f } = this.getTransform();
+      rysowania.push({ plik: new URL(obraz.src).pathname.split('/').pop(), args, macierz: [a, b, c, d, e, f] });
+      return drawImage.call(this, obraz, ...args);
+    };
+    // klatka() nie może tworzyć dodatkowych pętli requestAnimationFrame w teście.
+    window.requestAnimationFrame = () => 0;
+    try {
+      startGry();
+      const czas = performance.now();
+      for (const [nazwa, odUderzenia] of [
+        ['spoczynek', null], ['zamach', 45], ['uniesienie', 90], ['opuszczanie', 130],
+        ['docisk', 170], ['powrót', 230], ['odbicie', 330], ['po animacji', 500],
+      ]) {
+        stan.ostatniHit = odUderzenia === null ? -Infinity : czas - odUderzenia;
+        pacjent.ostatniHit = stan.ostatniHit;
+        pacjent.bob = 0; pacjent.predkosc = 0;
+        poprzedniCzas = czas;
+        rysowania.length = 0;
+        klatka(czas);
+        wyniki.push({ nazwa, rysowania: rysowania.slice() });
+      }
+      return wyniki;
+    } finally {
+      ctx.drawImage = drawImage;
+      window.requestAnimationFrame = raf;
+    }
+  });
+  const skala = 1.09 * 0.85;
+  for (const { nazwa, rysowania } of klatki) {
+    const pacjent = rysowania[4].plik;
+    assert.ok(['pacjent.png', 'pacjent_relaks.png', 'pacjent_reakcja.png'].includes(pacjent), nazwa);
+    assert.deepEqual(rysowania.map(r => r.plik),
+      ['tlo.png', 'ramie_masaz.png', 'doktor_masaz.png', 'kozetka.png', pacjent, 'ramie_masaz.png'], nazwa);
+    const ramie = rysowania[1], dlon = rysowania[5];
+    assert.deepEqual(ramie.args, [-164 * skala, -204 * skala, 200 * skala, 234 * skala], nazwa);
+    assert.deepEqual(dlon.args, [0, 0, 100, 120, -164 * skala, -204 * skala, 100 * skala, 120 * skala], nazwa);
+    assert.deepEqual(dlon.macierz, ramie.macierz, `${nazwa}: wspólny obrót i bark`);
+    for (const i of [0, 2, 3, 4]) {
+      assert.deepEqual(rysowania[i].macierz, [1, 0, 0, 1, 0, 0], `${nazwa}: transformacja ręki nie zmienia innych warstw`);
+    }
+  }
+  assert.ok(new Set(klatki.map(k => k.rysowania[1].macierz.join(','))).size > 4, 'ramię animuje się, nie pozostaje nieruchome');
+}
+
 (async () => {
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined,
@@ -52,6 +102,7 @@ const url = process.env.GABINET_URL || 'http://127.0.0.1:8000/gabinet.html';
       await page.locator('#btn-ponownie').tap();
       assert.equal(await page.locator('#punkty-wartosc').textContent(), '0');
       assert.equal(await page.locator('#czas-wartosc').textContent(), '60');
+      await sprawdzWarstwy(page);
       // Symulacja obrotu urządzenia bez przeładowania strony.
       await page.setViewportSize({ width: height, height: width });
       await page.waitForFunction(() => {
@@ -59,9 +110,10 @@ const url = process.env.GABINET_URL || 'http://127.0.0.1:8000/gabinet.html';
         return r.width > 0 && r.x >= 0 && r.y >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
       });
       assert.equal(await page.evaluate(() => document.body.scrollWidth > innerWidth), false);
+      await sprawdzWarstwy(page);
       assert.deepEqual(errors, []);
       await page.close();
-      console.log(`✅ ${width}×${height}: start, pełna scena, dotyk, HUD, koniec, restart, obrót`);
+      console.log(`✅ ${width}×${height}: start, pełna scena, dotyk, HUD, koniec, restart, obrót, warstwy w spoczynku i animacji`);
     }
   } finally {
     await browser.close();
