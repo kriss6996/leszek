@@ -84,6 +84,31 @@
     #btn-oklep { display: none; }
   }
 
+  /* ---------- MOBILE PATCH: poprawki dla telefonow ---------- */
+  @media (max-width: 600px) {
+    #stage { padding: 4px; }
+    #rama { gap: 6px; }
+    #pasek-wynikow { padding: 8px 10px; border-radius: 10px; }
+    .hud .wartosc { font-size: clamp(22px, 5vw, 32px); }
+    #combo-wartosc { font-size: 14px; }
+    #widok { border-radius: 8px; }
+    canvas { border-radius: 4px; }
+    #btn-oklep {
+      min-height: 56px; padding: 10px; font-size: 18px; border-radius: 10px;
+    }
+    #btn-oklep small { font-size: 11px; margin-top: 3px; }
+    #przyciski { gap: 6px; }
+    #przyciski button, #przyciski a.dom {
+      min-height: 40px; min-width: 40px; padding: 6px 10px; font-size: 13px;
+    }
+  }
+  @media (max-width: 400px) {
+    #tytul-gabinetu { font-size: 12px; }
+    #tytul-gabinetu small { font-size: 10px; }
+    .hud .etykieta { font-size: 10px; }
+    #btn-oklep { min-height: 52px; font-size: 16px; }
+  }
+
   /* ---------- ekrany (start / koniec) ---------- */
   .ekran {
     position: absolute; inset: 0; z-index: 10;
@@ -133,6 +158,17 @@
     .ekran { gap: 8px; }
     .ekran h1 { font-size: 24px; }
     .ekran p { font-size: 13px; }
+  }
+
+  /* Mobile patch: poprawki ekranow na malych urzadzeniach */
+  @media (max-width: 600px) {
+    .ekran { padding: 12px 8px; gap: 0.8em; }
+    .ekran h1 { font-size: clamp(18px, 5vw, 28px); }
+    .ekran p { font-size: clamp(11px, 2.5vw, 16px); max-width: 100%; }
+    .ekran .male { font-size: clamp(9px, 2vw, 13px); }
+    .przycisk-duzy { font-size: clamp(14px, 3vw, 22px); padding: .5em 1.3em; min-height: 44px; }
+    .przycisk-dom { font-size: clamp(11px, 2vw, 16px); min-height: 40px; }
+    #ekran-koniec .wynik-koniec { font-size: clamp(28px, 8vw, 60px); }
   }
 </style>
 </head>
