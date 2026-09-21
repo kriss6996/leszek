@@ -142,21 +142,24 @@ console.log("\nWSZYSTKIE TESTY LOGIKI ZALICZONE 🎉");
 assert.equal(html.match(/<\/html>/g).length, 1);
 assert.equal(html.split('</html>')[1].trim(), '');
 
-// Skalowanie całej sceny (bez kadrowania) w obu orientacjach.
+// Dynamiczne skalowanie: CAŁA scena zawsze "contain", niezależnie od ekranu.
 for (const [width, height] of [[320, 300], [390, 550], [844, 200], [1376, 768]]) {
   Object.assign(el('widok'), { clientWidth: width, clientHeight: height });
   vm.runInContext('dopasuj()', sandbox);
   const w = parseFloat(el('gra').style.width), h = parseFloat(el('gra').style.height);
-  assert.ok(w > 0 && h > 0 && w <= width && h <= height);
-  assert.ok(Math.abs(w - h * 1376 / 768) < 2);
+  assert.ok(w > 0 && h > 0 && w <= width && h <= height, `musi sie miescic ${width}x${height}`);
+  const okno = vm.runInContext('OKNO', sandbox);
+  assert.deepEqual([okno.x, okno.y, okno.w, okno.h], [0, 0, 1376, 768], 'zawsze cala scena');
+  const s = Math.min(width / 1376, height / 768);
+  assert.ok(Math.abs(w - Math.floor(1376 * s)) <= 1, 'szerokosc zgodna ze skala contain');
+  assert.ok(Math.abs(h - Math.floor(768 * s)) <= 1, 'wysokosc zgodna ze skala contain');
 }
 
-// Pivot i bark muszą należeć do właściwych PNG, a dłoń trafić w plecy.
+// Pivot i bark muszą należeć do właściwych PNG, a dłoń trafić w plecy (w prawo, przy doktorze).
 const geometria = vm.runInContext(`({ reka: REKA, kontakt: KONTAKT,
   podniesiona: pozycjaDloni(REKA.katUniesienie) })`, sandbox);
 assert.ok(geometria.reka.pivot.x < 200 && geometria.reka.pivot.y < 234);
 assert.ok(geometria.reka.bark.y < 250, 'mocowanie w barku, nie przy biodrze');
-// Dłoń przesunięta w prawo: środek pleców pacjenta, bliżej doktora (naturalniejszy kąt).
 assert.ok(geometria.kontakt.x > 600 && geometria.kontakt.x < 660);
 assert.ok(geometria.kontakt.y > 430 && geometria.kontakt.y < 470);
 assert.ok(geometria.podniesiona.y < geometria.kontakt.y - 40);

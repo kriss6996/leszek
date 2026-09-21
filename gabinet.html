@@ -26,12 +26,12 @@
     width: 100%; height: 100%; height: 100dvh;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
              max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-    display: flex; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     user-select: none; -webkit-user-select: none;
   }
   #rama {
     position: relative; width: 100%; max-width: 1376px; min-width: 0; min-height: 0;
-    display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 10px;
+    display: grid; grid-template-rows: auto auto auto auto; gap: 10px;
   }
   #pasek-wynikow {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -79,7 +79,7 @@
     #pasek-wynikow { padding: 10px; gap: 6px; }
   }
   @media (max-height: 500px) and (orientation: landscape) {
-    #rama { grid-template-rows: auto minmax(0, 1fr) auto; gap: 4px; }
+    #rama { gap: 4px; }
     #pasek-wynikow { padding: 4px 12px; }
     .hud .wartosc { font-size: 24px; }
     #combo-wrap { min-height: 0; height: 18px; }
@@ -248,10 +248,10 @@ const GRAFIKI = {
    dlon   = srodek dloni (w px sprite'a), katy ekranowe (0=prawo, 90=dol, -90=gora). */
 const REKA = {
   pivot: { x: 164, y: 204 },
-  bark:  { x: 95, y: 215 },
+  bark:  { x: 95, y: 215 },   // gniazdo w barku: dłoń w prawo, nad środkiem pleców
   dlon:  { x: 45, y: 64 },
   skala: 1.09,
-  katSpoczynek: 150,  // dłoń nad środkiem pleców, ramię wychodzi z barku
+  katSpoczynek: 150,  // dłoń nad środkiem pleców, ramię naturalnie ukośnie z barku
   katUniesienie: 172,
   katDocisk: 146
 };
@@ -295,16 +295,43 @@ const stan = {
   dzwiek: localStorage.getItem("gabinet_dzwiek") !== "0",
 };
 
-/* ---------- Pełna scena „contain”; UI nie zajmuje miejsca na płótnie. ---------- */
-function dopasuj() {
+/* ---------- Dynamiczne skalowanie sceny (contain; smartfon pion/poziom) ----------
+   CAŁY gabinet 1376x768 jest zawsze w całości widoczny — scena skaluje się
+   do wolnego miejsca po odjęciu HUD/przycisków, niezależnie od orientacji.
+   Układ wyśrodkowuje wiersze pionowo, więc nie ma martwych pasów nad/pod. */
+let OKNO = { x: 0, y: 0, w: W, h: H, s: 1 };
+
+function dostepneMiejsce() {
+  if (typeof getComputedStyle === "function") {
+    const stage = document.getElementById("stage");
+    const rama = document.getElementById("rama");
+    const ss = getComputedStyle(stage), rs = getComputedStyle(rama);
+    const gap = parseFloat(rs.rowGap) || 0;
+    // Dwa odstępy między 3 stałymi wierszami + 1 gdy widoczny przycisk Oklep.
+    let zajete = parseFloat(ss.paddingTop) + parseFloat(ss.paddingBottom) + 2 * gap;
+    zajete += document.getElementById("pasek-wynikow").offsetHeight;
+    zajete += document.getElementById("przyciski").offsetHeight;
+    const btn = document.getElementById("btn-oklep");
+    if (btn.offsetHeight > 0) zajete += btn.offsetHeight + gap;
+    const w = stage.clientWidth - parseFloat(ss.paddingLeft) - parseFloat(ss.paddingRight);
+    const h = stage.clientHeight - zajete;
+    if (w > 0 && h > 0) return { w, h };
+  }
   const widok = document.getElementById("widok");
-  const skala = Math.min(widok.clientWidth / W, widok.clientHeight / H);
-  cv.style.width = Math.floor(W * skala) + "px";
-  cv.style.height = Math.floor(H * skala) + "px";
+  return { w: widok.clientWidth, h: widok.clientHeight };
+}
+
+function dopasuj() {
+  const { w: dostW, h: dostH } = dostepneMiejsce();
+  if (!dostW || !dostH) return;
+  const s = Math.min(dostW / W, dostH / H);
+  OKNO = { x: 0, y: 0, w: W, h: H, s };
+  cv.style.width = Math.floor(W * s) + "px";
+  cv.style.height = Math.floor(H * s) + "px";
 }
 window.addEventListener("resize", dopasuj);
-window.addEventListener("orientationchange", dopasuj);
 window.addEventListener("load", dopasuj);
+window.addEventListener("orientationchange", dopasuj);
 if (window.visualViewport) window.visualViewport.addEventListener("resize", dopasuj);
 if (window.ResizeObserver) new ResizeObserver(dopasuj).observe(document.getElementById("widok"));
 dopasuj();
@@ -602,6 +629,8 @@ function klatka(czas) {
   const dt = Math.min(0.05, (czas - poprzedniCzas) / 1000 || 0);
   poprzedniCzas = czas;
 
+  // Zawsze pełna scena 1376x768 (skalowanie robi CSS na elemencie canvas).
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, W, H);
   rysuj(img.tlo, 0, 0);
 
