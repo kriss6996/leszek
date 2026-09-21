@@ -95,9 +95,19 @@ wgraj plik o **tej samej nazwie** („Add file → Upload files”) i odśwież 
 
 - **Miny pacjenta** (`pacjent*.png`) muszą mieć **identyczny kadr i pozycję głowy** —
   gra rysuje jedną z nich w tym samym miejscu (różni się tylko twarz).
-- **`ramie_masaz.png`** jest obracana wokół punktu barku zapisanego w `gabinet.html`
-  (sekcja `REKA.pivot`). Jeśli wgrasz rękę w innej pozycji, dostosuj `pivot`/`dlon`
-  oraz kąty (`katSpoczynek`, `katUniesienie`) w pliku `gabinet.html`.
+- **`ramie_masaz.png`** jest obracana wokół **środka czerwonego mankietu** — to punkt
+  `REKA.pivot` w `gabinet.html`, a `REKA.bark` mówi, w które miejsce tułowia
+  (`doktor_masaz.png`) ten mankiet jest wpięty. Jeśli wgrasz rękę w innej pozycji,
+  dostosuj `pivot`/`dlon` oraz kąty (`katSpoczynek`, `katUniesienie`, `katDocisk`).
+  Aktualne wartości (zmierzone na PNG):
+
+  | Klucz | Wartość | Co znaczy |
+  |-------|---------|-----------|
+  | `pivot` | `x:175, y:210` | środek czerwonego mankietu (mankiet zajmuje x 155..194, y 192..231) |
+  | `bark` | `x:72, y:152` | koniec czerwonego rękawa koszulki w `doktor_masaz.png` |
+  | `dlon` | `x:36, y:44` | środek dłoni (nie nadgarstek) — trafiana część pleców |
+  | `skala` | `1.12` | dłoń na plecach, mankiet = szerokość rękawa koszulki |
+  | `katSpoczynek / katUniesienie / katDocisk` | `144 / 158 / 139` | spoczynek, zamach (dłoń wyżej), uderzenie (dłoń na plecach, ok. x 586, y 440) |
 - Pozycje wszystkich warstw (x, y, skala) są w sekcji `GRAFIKI` na początku
   skryptu w `gabinet.html` — łatwo przesunąć postacie po podmianie grafik.
 
@@ -119,8 +129,14 @@ Po zmianie kształtu grafik sprawdź punkty `REKA.pivot`, `REKA.bark`, `REKA.dlo
 
 Kolejność rysowania: **tło → całe ramię → tułów doktora → kozetka i pacjent →
 dłoń z mankietem → efekty**. Przednia warstwa to wyłącznie wycinek
-`ramie_masaz.png` o współrzędnych **x=0, y=0, szerokość=100, wysokość=120**,
-z tym samym pivotem, obrotem i skalą co całe ramię. Nasada rękawa pozostaje za tułowiem.
+`ramie_masaz.png` o współrzędnych **x=0, y=0, szerokość=100, wysokość=120** (dłoń
+z nadgarstkiem, bez nasady rękawa), z tym samym pivotem, obrotem i skalą co całe
+ramię. Nasada rękawa pozostaje za tułowiem, więc obrót w barku jest zawsze zasłonięty.
+
+**Punkty i okrzyki pacjenta** (`PERFECT! x2`, „Aaaaach!”) pojawiają się **u góry
+sceny, w obrębie szerokości kozetki** — wylicza je `zakresKozetki()` na podstawie
+`GRAFIKI.kozetka`, a `wKozetce()` dociąga każdy efekt tak, aby nie wyszedł za
+kozetkę ani za kadr. Stałe pionowe: `GORA_NAPIS = 112` i `GORA_DYMEK = 180`.
 
 Cały gabinet zachowuje proporcje **1376×768**, bez przycinania i rozciągania.
 Punktacja, czas i przyciski znajdują się poza płótnem. W pionie dostępny jest duży

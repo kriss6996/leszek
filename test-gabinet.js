@@ -155,14 +155,38 @@ for (const [width, height] of [[320, 300], [390, 550], [844, 200], [1376, 768]])
   assert.ok(Math.abs(h - Math.floor(768 * s)) <= 1, 'wysokosc zgodna ze skala contain');
 }
 
-// Pivot i bark muszą należeć do właściwych PNG, a dłoń trafić w plecy (w prawo, przy doktorze).
+// Pivot i bark muszą należeć do właściwych PNG, a dłoń trafić w plecy (w lewo, przy doktorze).
 const geometria = vm.runInContext(`({ reka: REKA, kontakt: KONTAKT,
-  podniesiona: pozycjaDloni(REKA.katUniesienie) })`, sandbox);
-assert.ok(geometria.reka.pivot.x < 200 && geometria.reka.pivot.y < 234);
-assert.ok(geometria.reka.bark.y < 250, 'mocowanie w barku, nie przy biodrze');
-assert.ok(geometria.kontakt.x > 600 && geometria.kontakt.x < 660);
-assert.ok(geometria.kontakt.y > 430 && geometria.kontakt.y < 470);
-assert.ok(geometria.podniesiona.y < geometria.kontakt.y - 40);
+  podniesiona: pozycjaDloni(REKA.katUniesienie), doktor: GRAFIKI.doktor })`, sandbox);
+// Mankiet (czerwony) w ramie_masaz.png zajmuje x 155..194, y 192..231 — tam jest obrót.
+assert.ok(geometria.reka.pivot.x >= 155 && geometria.reka.pivot.x <= 194, 'pivot w środku mankietu');
+assert.ok(geometria.reka.pivot.y >= 192 && geometria.reka.pivot.y <= 231, 'pivot w środku mankietu');
+// Ręka nie może obracać się na środku tułowia: koniec rękawa koszulki to y ~138..162.
+assert.ok(geometria.reka.bark.y >= 120 && geometria.reka.bark.y <= 170, 'mocowanie w barku, nie na brzuchu');
+assert.ok(geometria.reka.bark.x >= 50 && geometria.reka.bark.x <= 95, 'mocowanie przy lewej krawędzi barku');
+// Dłoń na plecach pacjenta: pas pleców to canvas x 500..700, y 405..465 (kozetka x 330..924).
+assert.ok(geometria.kontakt.x > 520 && geometria.kontakt.x < 700, `kontakt.x = ${geometria.kontakt.x}`);
+assert.ok(geometria.kontakt.y > 400 && geometria.kontakt.y < 470, `kontakt.y = ${geometria.kontakt.y}`);
+assert.ok(geometria.podniesiona.y < geometria.kontakt.y - 40, 'zamach musi unosić dłoń nad plecy');
+// Ręka nie może być większa niż tułów doktora (mankiet ~szerokość rękawa) ani od niego mniejsza.
+const szerokoscDloni = Math.hypot(geometria.reka.dlon.x - geometria.reka.pivot.x,
+  geometria.reka.dlon.y - geometria.reka.pivot.y) * geometria.reka.skala * geometria.doktor.skala;
+assert.ok(szerokoscDloni > 180 && szerokoscDloni < 230, `ramię za długie/za krótkie: ${szerokoscDloni}`);
+
+// Punkty i dymki: na górze sceny, zawsze w obrębie szerokości kozetki i nad dłonią.
+vm.runInContext(`
+  dymki.length = 0; napisy.length = 0;
+  for (let i = 0; i < 6; i++) { dodajNapis('PERFECT! x4', '#ffd23f'); dodajDymek('Aaaaach!', '#7dffb9'); }
+`, sandbox);
+ctxCalls.length = 0;
+vm.runInContext('rysujEfekty(performance.now())', sandbox);
+const efekty = ctxCalls.filter(([metoda]) => metoda === 'fillText').map(([, args]) => ({ x: args[1], y: args[2] }));
+const zasieg = vm.runInContext('zakresKozetki()', sandbox);
+assert.ok(efekty.length >= 10, 'wszystkie napisy i dymki muszą być narysowane');
+for (const { x, y } of efekty) {
+  assert.ok(x >= zasieg.lewo - 1 && x <= zasieg.prawo + 1, `środek efektu poza kozetką: ${x}`);
+  assert.ok(y > 20 && y < geometria.kontakt.y - 40, `efekt nie jest pod sufitem, nad kozetką: ${y}`);
+}
 
 aktualnyCzas += 600;
 const przedPrzyciskiem = +el('punkty-wartosc').textContent;
@@ -173,7 +197,7 @@ assert.equal(el('btn-oklep').disabled, true);
 el('btn-ponownie')._fn.click();
 assert.equal(el('btn-oklep').disabled, false);
 assert.equal(+el('czas-wartosc').textContent, 60);
-console.log('✅ regresje: pełny HTML, skalowanie, geometria ręki, przycisk dotykowy i timer');
+console.log('✅ regresje: pełny HTML, skalowanie, geometria ręki (pivot w mankiecie), punkty nad kozetką, przycisk dotykowy i timer');
 
 // Warstwy: całe ramię za tułowiem, tylko dłoń z mankietem nad pacjentem.
 const konfiguracja = vm.runInContext('({ reka: REKA, grafiki: GRAFIKI, obrazy: img })', sandbox);

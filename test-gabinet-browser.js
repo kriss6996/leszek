@@ -40,15 +40,19 @@ async function sprawdzWarstwy(page) {
   const klatki = dane.wyniki;
   const kamera = [dane.W / dane.okno.w, 0, 0, dane.H / dane.okno.h,
                   -dane.okno.x * (dane.W / dane.okno.w), -dane.okno.y * (dane.H / dane.okno.h)];
-  const skala = await page.evaluate(() => REKA.skala * GRAFIKI.doktor.skala);
+  const { skala, pivot, sprajt } = await page.evaluate(() => ({
+    skala: REKA.skala * GRAFIKI.doktor.skala,
+    pivot: { x: REKA.pivot.x, y: REKA.pivot.y },
+    sprajt: { w: img.doktorReka.naturalWidth, h: img.doktorReka.naturalHeight },
+  }));
   for (const { nazwa, rysowania } of klatki) {
     const pacjent = rysowania[4].plik;
     assert.ok(['pacjent.png', 'pacjent_relaks.png', 'pacjent_reakcja.png'].includes(pacjent), nazwa);
     assert.deepEqual(rysowania.map(r => r.plik),
       ['tlo.png', 'ramie_masaz.png', 'doktor_masaz.png', 'kozetka.png', pacjent, 'ramie_masaz.png'], nazwa);
     const ramie = rysowania[1], dlon = rysowania[5];
-    assert.deepEqual(ramie.args, [-164 * skala, -204 * skala, 200 * skala, 234 * skala], nazwa);
-    assert.deepEqual(dlon.args, [0, 0, 100, 120, -164 * skala, -204 * skala, 100 * skala, 120 * skala], nazwa);
+    assert.deepEqual(ramie.args, [-pivot.x * skala, -pivot.y * skala, sprajt.w * skala, sprajt.h * skala], nazwa);
+    assert.deepEqual(dlon.args, [0, 0, 100, 120, -pivot.x * skala, -pivot.y * skala, 100 * skala, 120 * skala], nazwa);
     assert.deepEqual(dlon.macierz, ramie.macierz, `${nazwa}: wspólny obrót i bark`);
     for (const i of [0, 2, 3, 4]) {
       assert.ok(rysowania[i].macierz.every((v, j) => Math.abs(v - kamera[j]) < 1e-4),
@@ -56,6 +60,37 @@ async function sprawdzWarstwy(page) {
     }
   }
   assert.ok(new Set(klatki.map(k => k.rysowania[1].macierz.join(','))).size > 4, 'ramię animuje się, nie pozostaje nieruchome');
+
+  // Ręka obraca się w barku, a dłoń ląduje na plecach pacjenta — nie za krawędzią kozetki.
+  const geometria = await page.evaluate(() => ({
+    kontakt: KONTAKT, kozetka: zakresKozetki(), bark: {
+      x: GRAFIKI.doktor.x + REKA.bark.x * GRAFIKI.doktor.skala,
+      y: GRAFIKI.doktor.y + REKA.bark.y * GRAFIKI.doktor.skala,
+    },
+  }));
+  assert.ok(geometria.kontakt.x > geometria.kozetka.lewo && geometria.kontakt.x < geometria.kozetka.prawo,
+    'dłoń nad kozetką');
+  assert.ok(geometria.kontakt.y > geometria.bark.y, 'dłoń poniżej barku (ręka sięga pleców)');
+}
+
+// Nazwy punktów i dymki pacjenta: na górze, w obrębie szerokości kozetki.
+async function sprawdzPunkty(page) {
+  const dane = await page.evaluate(() => {
+    dymki.length = 0; napisy.length = 0;
+    for (let i = 0; i < 6; i++) { dodajNapis('PERFECT! x4', '#ffd23f'); dodajDymek('Aaaaach!', '#7dffb9'); }
+    const rysowane = [];
+    const fillText = ctx.fillText;
+    ctx.fillText = function (tekst, x, y) { rysowane.push({ tekst, x, y }); return fillText.apply(this, arguments); };
+    const przed = performance.now();
+    rysujEfekty(przed);
+    ctx.fillText = fillText;
+    return { rysowane, zakres: zakresKozetki(), kontakt: KONTAKT };
+  });
+  assert.ok(dane.rysowane.length >= 10, 'wszystkie efekty są rysowane');
+  for (const { x, y } of dane.rysowane) {
+    assert.ok(x >= dane.zakres.lewo && x <= dane.zakres.prawo, `punkt poza szerokością kozetki: ${x}`);
+    assert.ok(y > 20 && y < dane.kontakt.y - 40, `punkt nie jest u góry sceny: ${y}`);
+  }
 }
 
 (async () => {
@@ -110,6 +145,7 @@ async function sprawdzWarstwy(page) {
       assert.equal(await page.locator('#punkty-wartosc').textContent(), '0');
       assert.equal(await page.locator('#czas-wartosc').textContent(), '60');
       await sprawdzWarstwy(page);
+      await sprawdzPunkty(page);
       // Symulacja obrotu urządzenia bez przeładowania strony.
       await page.setViewportSize({ width: height, height: width });
       await page.waitForFunction(() => {

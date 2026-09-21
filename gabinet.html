@@ -242,18 +242,24 @@ const GRAFIKI = {
   doktorCalosc:     { plik: "doktor_calosc.png" }, // zapasowa, nieuzywana w animacji
 };
 
-/* Geometria ramienia (PRAWA reka doktora — ta od strony pacjenta):
-   pivot  = punkt mocowania rekawa w sprajcie REKI (staly punkt obrotu),
-   bark   = gniazdo barku w sprajcie CIALA (doktor_masaz.png) — tam "wpina sie" reka,
-   dlon   = srodek dloni (w px sprite'a), katy ekranowe (0=prawo, 90=dol, -90=gora). */
+/* Geometria ramienia (PRAWA ręka doktora — ta od strony pacjenta):
+   pivot = punkt obrotu w sprajcie RAMIENIA, bark = gniazdo w sprajcie CIAŁA,
+   dlon  = środek dłoni (px sprajta), kąty ekranowe (0 = prawo, 90 = dół, -90 = góra).
+
+   Punkt obrotu to ŚRODEK CZERWONEGO MANKIETU w ramie_masaz.png (mankiet zajmuje
+   x 155..194, y 192..231 — zmierzono na PNG), a bark to koniec czerwonego rękawa
+   koszulki w doktor_masaz.png (lewa krawędź sylwetki 59 px przy y=138, rękaw
+   kończy się ok. y=152). Dzięki temu ramię obraca się w barku, a nie na środku
+   tułowia, i nigdy nie „odkleja” się od ramienia doktora.
+   dlon = środek dłoni, nie nadgarstek — to on ląduje na plecach pacjenta. */
 const REKA = {
-  pivot: { x: 164, y: 204 },
-  bark:  { x: 95, y: 215 },   // gniazdo w barku: dłoń w prawo, nad środkiem pleców
-  dlon:  { x: 45, y: 64 },
-  skala: 1.09,
-  katSpoczynek: 150,  // dłoń nad środkiem pleców, ramię naturalnie ukośnie z barku
-  katUniesienie: 172,
-  katDocisk: 146
+  pivot: { x: 175, y: 210 },  // środek mankietu = właściwy punkt obrotu (czerwona strzałka)
+  bark:  { x: 72, y: 152 },   // gniazdo w barku: koniec czerwonego rękawa koszulki
+  dlon:  { x: 36, y: 44 },    // środek dłoni, nie nadgarstek
+  skala: 1.12,                // dłoń dobrze widoczna na plecach, mankiet = szerokość rękawa
+  katSpoczynek: 144,          // dłoń przy plecach, mankiet zgadza się z rękawem koszulki
+  katUniesienie: 158,         // zamach: dłoń w górę, nad łopatki pacjenta
+  katDocisk: 139              // uderzenie: dłoń na środku pleców (ok. x=585, y=440)
 };
 
 // Punkt kontaktu wyliczany z tej samej geometrii co animowana dłoń.
@@ -422,11 +428,37 @@ const dymki = [];
 const czastki = [];
 const napisy = [];
 
+/* Punkty i okrzyki pacjenta wyświetlamy na SAMEJ GÓRZE sceny, ale zawsze
+   w obrębie szerokości kozetki — nigdy nad doktorem, szafą ani za krawędzią
+   kadru. Kolejne efekty po szybkich uderzeniach dokładają się niżej. */
+const GORA_NAPIS = 112, GORA_DYMEK = 180, KROK_STOSU = 44;
+const MARGINES_KOZETKI = 12;
+
+function zakresKozetki() {
+  const cfg = GRAFIKI.kozetka, obraz = img.kozetka;
+  const szerokosc = (obraz && obraz.width && !obraz._blad ? obraz.width : 1024) * (cfg.skala || 1);
+  const lewo = cfg.x + MARGINES_KOZETKI, prawo = cfg.x + szerokosc - MARGINES_KOZETKI;
+  return { lewo, prawo, srodek: (lewo + prawo) / 2 };
+}
+
+// X środka efektu: wyśrodkowany na kozetce i zmieszczony w jej szerokości.
+function wKozetce(x, polowa = 0) {
+  const z = zakresKozetki();
+  const lewo = z.lewo + polowa, prawo = z.prawo - polowa;
+  return prawo > lewo ? Math.max(lewo, Math.min(prawo, x)) : z.srodek;
+}
+
 function dodajDymek(tekst, kolor) {
-  dymki.push({ tekst, kolor, x: KONTAKT.x - 60 + Math.random() * 40, y: KONTAKT.y - 120, t0: performance.now(), zycie: 1500 });
+  const z = zakresKozetki();
+  dymki.push({ tekst, kolor, x: wKozetce(z.srodek + Math.random() * 160 - 80),
+               y: GORA_DYMEK + Math.min(3, dymki.length) * KROK_STOSU,
+               t0: performance.now(), zycie: 1500 });
 }
 function dodajNapis(tekst, kolor) {
-  napisy.push({ tekst, kolor, x: KONTAKT.x + 90, y: KONTAKT.y - 60, t0: performance.now(), zycie: 900 });
+  const z = zakresKozetki();
+  napisy.push({ tekst, kolor, x: z.srodek,
+                y: GORA_NAPIS + Math.min(3, napisy.length) * KROK_STOSU,
+                t0: performance.now(), zycie: 900 });
 }
 function dodajCzastki(n, kolor) {
   for (let i = 0; i < n; i++) {
@@ -448,7 +480,8 @@ function rysujEfekty(czas) {
     const szer = ctx.measureText(d.tekst).width + 26;
     ctx.fillStyle = "rgba(255,255,255,.95)";
     ctx.strokeStyle = d.kolor; ctx.lineWidth = 3;
-    const x = d.x - szer / 2, yy = y - 20, hh = 40, rr = 14;
+    const srodek = wKozetce(d.x, szer / 2);
+    const x = srodek - szer / 2, yy = y - 20, hh = 40, rr = 14;
     ctx.beginPath();
     ctx.moveTo(x + rr, yy);
     ctx.arcTo(x + szer, yy, x + szer, yy + hh, rr);
@@ -460,7 +493,7 @@ function rysujEfekty(czas) {
     ctx.arcTo(x, yy, x + szer, yy, rr);
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#223"; ctx.textAlign = "center";
-    ctx.fillText(d.tekst, d.x, y + 6);
+    ctx.fillText(d.tekst, srodek, y + 6);
     ctx.restore();
   }
   for (let i = napisy.length - 1; i >= 0; i--) {
@@ -470,11 +503,12 @@ function rysujEfekty(czas) {
     ctx.save();
     ctx.globalAlpha = 1 - k;
     ctx.font = "800 30px 'Helvetica Neue', Arial, sans-serif";
-    ctx.textAlign = "left";
+    ctx.textAlign = "center";
+    const x = wKozetce(n.x, ctx.measureText(n.tekst).width / 2), y = n.y - k * 46;
     ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 5;
-    ctx.strokeText(n.tekst, n.x, n.y - k * 46);
+    ctx.strokeText(n.tekst, x, y);
     ctx.fillStyle = n.kolor;
-    ctx.fillText(n.tekst, n.x, n.y - k * 46);
+    ctx.fillText(n.tekst, x, y);
     ctx.restore();
   }
   for (let i = czastki.length - 1; i >= 0; i--) {
