@@ -156,8 +156,9 @@ const geometria = vm.runInContext(`({ reka: REKA, kontakt: KONTAKT,
   podniesiona: pozycjaDloni(REKA.katUniesienie) })`, sandbox);
 assert.ok(geometria.reka.pivot.x < 200 && geometria.reka.pivot.y < 234);
 assert.ok(geometria.reka.bark.y < 250, 'mocowanie w barku, nie przy biodrze');
-assert.ok(geometria.kontakt.x > 540 && geometria.kontakt.x < 600);
-assert.ok(geometria.kontakt.y > 400 && geometria.kontakt.y < 435);
+// Dłoń przesunięta w prawo: środek pleców pacjenta, bliżej doktora (naturalniejszy kąt).
+assert.ok(geometria.kontakt.x > 600 && geometria.kontakt.x < 660);
+assert.ok(geometria.kontakt.y > 430 && geometria.kontakt.y < 470);
 assert.ok(geometria.podniesiona.y < geometria.kontakt.y - 40);
 
 aktualnyCzas += 600;

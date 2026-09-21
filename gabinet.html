@@ -52,7 +52,9 @@
     background: #142e23; border-radius: 12px; overflow: hidden;
   }
   canvas {
-    display: block; max-width: 100%; max-height: 100%; object-fit: contain;
+    /* CSS skaluje scene dynamicznie do kazdego ekranu (pion/poziom) nawet bez JS:
+       element wypelnia #widok, a object-fit zawiera caly gabinet bez przycinania. */
+    display: block; width: 100%; height: 100%; object-fit: contain;
     cursor: pointer; touch-action: none; border-radius: 6px;
   }
   #btn-oklep {
@@ -246,12 +248,12 @@ const GRAFIKI = {
    dlon   = srodek dloni (w px sprite'a), katy ekranowe (0=prawo, 90=dol, -90=gora). */
 const REKA = {
   pivot: { x: 164, y: 204 },
-  bark:  { x: 60, y: 205 },
+  bark:  { x: 95, y: 215 },
   dlon:  { x: 45, y: 64 },
   skala: 1.09,
-  katSpoczynek: 158,  // dłoń nad plecami, ramię wychodzi z barku
-  katUniesienie: 178,
-  katDocisk: 154
+  katSpoczynek: 150,  // dłoń nad środkiem pleców, ramię wychodzi z barku
+  katUniesienie: 172,
+  katDocisk: 146
 };
 
 // Punkt kontaktu wyliczany z tej samej geometrii co animowana dłoń.
@@ -302,6 +304,7 @@ function dopasuj() {
 }
 window.addEventListener("resize", dopasuj);
 window.addEventListener("orientationchange", dopasuj);
+window.addEventListener("load", dopasuj);
 if (window.visualViewport) window.visualViewport.addEventListener("resize", dopasuj);
 if (window.ResizeObserver) new ResizeObserver(dopasuj).observe(document.getElementById("widok"));
 dopasuj();
