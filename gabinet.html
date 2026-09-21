@@ -265,7 +265,7 @@ const GRAFIKI = {
   pacjent:          { plik: "pacjent.png",   x: 350, y: 337, skala: 0.48 },
   pacjentReakcja:   { plik: "pacjent_reakcja.png" },
   pacjentRelaks:    { plik: "pacjent_relaks.png" },
-  doktor:           { plik: "doktor_masaz.png",    x: 680, y: 175, skala: 0.85 },
+  doktor:           { plik: "doktor_masaz.png",    x: 640, y: 213, skala: 0.85 },  // bliżej pacjenta — rekompensata krótszej ręki (REKA.skala 0.7)
   doktorReka:       { plik: "ramie_masaz.png" },
 };
 
@@ -274,18 +274,22 @@ const GRAFIKI = {
    dlon  = środek dłoni (px sprajta), kąty ekranowe (0 = prawo, 90 = dół, -90 = góra).
 
    Punkt obrotu to ŚRODEK CZERWONEGO MANKIETU w ramie_masaz.png (mankiet zajmuje
-   x 155..194, y 192..231 — zmierzono na PNG), a bark to koniec czerwonego rękawa
-   koszulki w doktor_masaz.png (lewa krawędź sylwetki 59 px przy y=138, rękaw
-   kończy się ok. y=152). Dzięki temu ramię obraca się w barku, a nie na środku
+   x 155..194, y 192..231 — zmierzono na PNG), a bark to gniazdo w czerwonym
+   rękawie/koszulce doktora (lewa krawędź sylwetki 59 px przy y=138, rękaw kończy
+   się ok. y=152). Dzięki temu ramię obraca się w barku, a nie na środku
    tułowia, i nigdy nie „odkleja” się od ramienia doktora.
+   bark.y przesuwa całą rękę w pionie (mniejsze = wyżej) bez zmiany obrotu.
    dlon = środek dłoni, nie nadgarstek — to on ląduje na plecach pacjenta. */
 const REKA = {
   pivot: { x: 175, y: 210 },  // środek mankietu = właściwy punkt obrotu (czerwona strzałka)
-  bark:  { x: 72, y: 152 },   // gniazdo w barku: koniec czerwonego rękawa koszulki
+  bark:  { x: 72, y: 137 },   // gniazdo w barku; Y = wysokość całej ręki (mniejsze = wyżej,
+                               // 1 pkt ≈ 0.85 px), obrót i kąty pozostają bez zmian
   dlon:  { x: 36, y: 44 },    // środek dłoni, nie nadgarstek
-  skala: 1.0,                 // drobna, zgrabna dłoń — obrót i tak w rękawie koszulki
-  katSpoczynek: 142,          // dłoń tuż nad plecami, mankiet zgadza się z rękawem
-  katUniesienie: 156,         // zamach: dłoń w górę, nad łopatki pacjenta
+  skala: 0.7,                 // ręka 30% mniejsza; doktor przesunięty bliżej (x 680→640,
+                               // y 175→213), więc krótsza ręka dalej sięga na środek pleców
+  katSpoczynek: 144,          // dłoń tuż nad plecami, mankiet zgadza się z rękawem
+  katUniesienie: 164,         // zamach: dłoń w górę, nad łopatki pacjenta (krótsza ręka
+                               // wymaga szerszego kąta, by zamach był tak samo wysoki)
   katDocisk: 137              // uderzenie: dłoń na środku pleców (ok. x=607, y=429)
 };
 
