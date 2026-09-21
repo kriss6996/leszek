@@ -85,11 +85,8 @@ wgraj plik o **tej samej nazwie** („Add file → Upload files”) i odśwież 
 | `pacjent.png`              | pacjent leżący na kozetce — mina spokojna | pełny kadr ciała |
 | `pacjent_reakcja.png`      | pacjent — mina „zaskoczony” (po oklepaniu) | **ten sam kadr co `pacjent.png`**, inna tylko mina |
 | `pacjent_relaks.png`       | pacjent — mina „błogi relaks” | **ten sam kadr co `pacjent.png`**, inna tylko mina |
-| `doktor.png`               | oryginalna warstwa ciała | zachowana, nieużywana w animacji |
 | `doktor_masaz.png`         | ciało z jedną ręką w spoczynku | aktualna warstwa ciała |
-| `ramie_masaz.png`          | samo animowane ramię | obracane wokół barku |
-| `doktor_reka.png`          | oryginalna ręka z fragmentem tułowia | źródło do przygotowania ramienia |
-| `doktor_calosc.png`        | Doktor Leszek z obiema rękami | zapasowa, nieużywana w animacji |
+| `ramie_masaz.png`          | samo animowane ramię | obracane wokół środka czerwonego mankietu |
 
 ### Ważne przy podmianie
 
@@ -106,8 +103,8 @@ wgraj plik o **tej samej nazwie** („Add file → Upload files”) i odśwież 
   | `pivot` | `x:175, y:210` | środek czerwonego mankietu (mankiet zajmuje x 155..194, y 192..231) |
   | `bark` | `x:72, y:152` | koniec czerwonego rękawa koszulki w `doktor_masaz.png` |
   | `dlon` | `x:36, y:44` | środek dłoni (nie nadgarstek) — trafiana część pleców |
-  | `skala` | `1.12` | dłoń na plecach, mankiet = szerokość rękawa koszulki |
-  | `katSpoczynek / katUniesienie / katDocisk` | `144 / 158 / 139` | spoczynek, zamach (dłoń wyżej), uderzenie (dłoń na plecach, ok. x 586, y 440) |
+  | `skala` | `1.0` | drobna dłoń; ramię sięga pleców dokładnie z barku |
+  | `katSpoczynek / katUniesienie / katDocisk` | `142 / 156 / 137` | spoczynek, zamach (dłoń wyżej), uderzenie (dłoń na plecach, ok. x 607, y 429) |
 - Pozycje wszystkich warstw (x, y, skala) są w sekcji `GRAFIKI` na początku
   skryptu w `gabinet.html` — łatwo przesunąć postacie po podmianie grafik.
 
@@ -120,12 +117,10 @@ python3 -m http.server 8000
 
 ### Poprawiona scena i układ telefonu
 
-Gra używa teraz dwóch przygotowanych warstw: `doktor_masaz.png` (ciało z drugą
-ręką w spoczynku) i `ramie_masaz.png` (samo animowane ramię, bez fragmentu tułowia).
-Oryginalne `doktor.png`, `doktor_calosc.png` i `doktor_reka.png` zostały zachowane.
-Aby ponownie przygotować warstwy z oryginałów, uruchom
-`python scripts/prepare-gabinet-sprites.py` (wymaga biblioteki Pillow).
-Po zmianie kształtu grafik sprawdź punkty `REKA.pivot`, `REKA.bark`, `REKA.dlon`.
+Gra używa dwóch warstw doktora: `doktor_masaz.png` (ciało z drugą ręką w
+spoczynku) i `ramie_masaz.png` (samo animowane ramię, bez fragmentu tułowia).
+Po zmianie kształtu którejkolwiek z nich sprawdź punkty `REKA.pivot`, `REKA.bark`
+i `REKA.dlon` w `gabinet.html` — na nich trzyma się cała animacja oklepywania.
 
 Kolejność rysowania: **tło → całe ramię → tułów doktora → kozetka i pacjent →
 dłoń z mankietem → efekty**. Przednia warstwa to wyłącznie wycinek
@@ -133,32 +128,17 @@ dłoń z mankietem → efekty**. Przednia warstwa to wyłącznie wycinek
 z nadgarstkiem, bez nasady rękawa), z tym samym pivotem, obrotem i skalą co całe
 ramię. Nasada rękawa pozostaje za tułowiem, więc obrót w barku jest zawsze zasłonięty.
 
-**Punkty i okrzyki pacjenta** (`PERFECT! x2`, „Aaaaach!”) pojawiają się **u góry
-sceny, w obrębie szerokości kozetki** — wylicza je `zakresKozetki()` na podstawie
-`GRAFIKI.kozetka`, a `wKozetce()` dociąga każdy efekt tak, aby nie wyszedł za
-kozetkę ani za kadr. Stałe pionowe: `GORA_NAPIS = 112` i `GORA_DYMEK = 180`.
+**Punkty i czas** stoją **na górze, w obrębie szerokości kozetki** (nie na całą
+szerokość okna): `dopasujPasek()` mierzy rozpiętość `kozetka.png` w kadrze
+(`zakresKozetki()`), ustawia szerokość paska na dokładnie tyle i przesuwa go o
+różnicę środków, więc pasek zawsze trzyma się kozetki — także po podmianie grafiki,
+zmianie rozmiaru okna i obrocie telefonu. Fonty skalują się przez `--pasek-szer`, a
+przy bardzo wąskim pasku znikają najpierw tytuł (`wasce`), potem etykiety
+(`bardzo-wasce`). Okrzyki pacjenta („Aaaaach!”) i oceny („PERFECT! x2”) zostają tam,
+gdzie uderza dłoń — przy dłoni.
 
 Cały gabinet zachowuje proporcje **1376×768**, bez przycinania i rozciągania.
 Punktacja, czas i przyciski znajdują się poza płótnem. W pionie dostępny jest duży
 przycisk **Oklep plecy**; można również dotykać bezpośrednio gabinetu.
 Układ uwzględnia `100dvh`, bezpieczne obszary telefonu i zmianę orientacji.
 Wolne miejsce wokół poziomej sceny jest celowe — dzięki temu w pionie widać cały pokój.
-
-### Testy regresji gabinetu
-
-```bash
-node test-gabinet.js          # logika, skalowanie, geometria i warstwy; bez zależności
-npm ci
-npx playwright install --with-deps chromium
-python3 -m http.server 8000   # w osobnym terminalu
-npm run test:browser
-```
-
-Test przeglądarkowy sprawdza siedem rozmiarów od 320×568 do 1376×900:
-ekran startowy i końcowy, brak przycinania, proporcje sceny, HUD poza płótnem,
-sterowanie dotykowe, restart i zmianę orientacji. Przed i po obrocie sprawdza też
-kolejność warstw, dokładny wycinek dłoni oraz zgodność skali i macierzy obrotu
-w spoczynku i kolejnych fazach animacji. Test bez przeglądarki dodatkowo pilnuje,
-żeby efekty były nad dłonią, a zastępcze ramię przy braku PNG nie trafiało na wierzch.
-Opcjonalnie ustaw `GABINET_URL` lub `CHROMIUM_EXECUTABLE_PATH`, żeby użyć innego
-serwera/przeglądarki Chromium.

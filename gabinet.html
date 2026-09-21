@@ -111,6 +111,34 @@
     #btn-oklep { min-height: 52px; font-size: 16px; }
   }
 
+  /* ---------- PUNKTY NAD KOZETKĄ ----------
+     Punkty i czas są NA GÓRZE, ale w obrębie szerokości kozetki: szerokość
+     i przesunięcie paska wylicza dopasujPasek() (dociąga pasek do krawędzi
+     kozetki w kadrze i utrzymuje zbieżność z letterboxem canvasu). */
+  #pasek-wynikow {
+    justify-self: center; width: 100%; min-width: 0; max-width: 100%;
+    flex-wrap: nowrap; gap: clamp(4px, 1.2vw, 14px); padding: 8px clamp(6px, 1.4vw, 16px);
+  }
+  #pasek-wynikow.wasce #tytul-gabinetu { display: none; }   /* wąsko: same liczby */
+  #pasek-wynikow.wasce .hud { flex: 1 1 auto; }
+  #pasek-wynikow.bardzo-wasce .etykieta { display: none; }   /* najwężiej: bez opisów */
+  #pasek-wynikow.bardzo-wasce #combo-wrap { display: none; }
+  #pasek-wynikow .hud { min-width: 0; flex: 0 1 auto; }
+  #pasek-wynikow .hud .wartosc {
+    font-size: clamp(14px, calc(var(--pasek-szer, 600px) * .072), 40px);
+    white-space: nowrap; line-height: 1.05;
+  }
+  #pasek-wynikow .hud .etykieta { font-size: clamp(8px, calc(var(--pasek-szer, 600px) * .021), 12px); }
+  #pasek-wynikow #tytul-gabinetu {
+    font-size: clamp(10px, calc(var(--pasek-szer, 600px) * .026), 17px);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #pasek-wynikow #tytul-gabinetu small { font-size: .82em; }
+  #pasek-wynikow #combo-wrap {
+    min-height: clamp(14px, calc(var(--pasek-szer, 600px) * .036), 22px);  /* bez skakania sceny */
+  }
+  #pasek-wynikow #combo-wartosc { font-size: clamp(10px, calc(var(--pasek-szer, 600px) * .03), 18px); }
+
   /* ---------- ekrany (start / koniec) ---------- */
   .ekran {
     position: absolute; inset: 0; z-index: 10;
@@ -239,7 +267,6 @@ const GRAFIKI = {
   pacjentRelaks:    { plik: "pacjent_relaks.png" },
   doktor:           { plik: "doktor_masaz.png",    x: 680, y: 175, skala: 0.85 },
   doktorReka:       { plik: "ramie_masaz.png" },
-  doktorCalosc:     { plik: "doktor_calosc.png" }, // zapasowa, nieuzywana w animacji
 };
 
 /* Geometria ramienia (PRAWA ręka doktora — ta od strony pacjenta):
@@ -256,10 +283,10 @@ const REKA = {
   pivot: { x: 175, y: 210 },  // środek mankietu = właściwy punkt obrotu (czerwona strzałka)
   bark:  { x: 72, y: 152 },   // gniazdo w barku: koniec czerwonego rękawa koszulki
   dlon:  { x: 36, y: 44 },    // środek dłoni, nie nadgarstek
-  skala: 1.12,                // dłoń dobrze widoczna na plecach, mankiet = szerokość rękawa
-  katSpoczynek: 144,          // dłoń przy plecach, mankiet zgadza się z rękawem koszulki
-  katUniesienie: 158,         // zamach: dłoń w górę, nad łopatki pacjenta
-  katDocisk: 139              // uderzenie: dłoń na środku pleców (ok. x=585, y=440)
+  skala: 1.0,                 // drobna, zgrabna dłoń — obrót i tak w rękawie koszulki
+  katSpoczynek: 142,          // dłoń tuż nad plecami, mankiet zgadza się z rękawem
+  katUniesienie: 156,         // zamach: dłoń w górę, nad łopatki pacjenta
+  katDocisk: 137              // uderzenie: dłoń na środku pleców (ok. x=607, y=429)
 };
 
 // Punkt kontaktu wyliczany z tej samej geometrii co animowana dłoń.
@@ -327,6 +354,32 @@ function dostepneMiejsce() {
   return { w: widok.clientWidth, h: widok.clientHeight };
 }
 
+/* Rozpiętość kozetki w kadrze (px sceny) wyznacza, gdzie stoi pasek wyników.
+   Znacznik aktualizujemy po wczytaniu PNG (onload niżej), więc podmiana grafiki
+   kozetki nie rozjedna paska ze sceną. */
+let szerokoscKozetki = 1024 * (GRAFIKI.kozetka.skala || 1);
+function zakresKozetki() {
+  const cfg = GRAFIKI.kozetka;
+  return { lewo: cfg.x, prawo: cfg.x + szerokoscKozetki, srodek: cfg.x + szerokoscKozetki / 2 };
+}
+
+/* Pasek „Punkty / Czas” na górze, ale dokładnie w obrębie szerokości kozetki. */
+function dopasujPasek() {
+  const pasek = document.getElementById("pasek-wynikow");
+  if (!pasek || !OKNO.s) return;
+  const k = zakresKozetki();
+  const kana = W * OKNO.s;                              // szerokość sceny na ekranie
+  const rama = document.getElementById("rama");
+  const dostepne = (rama && rama.clientWidth) ? rama.clientWidth : kana;
+  const szerokosc = Math.min(dostepne, Math.round((k.prawo - k.lewo) / W * kana));
+  pasek.style.width = szerokosc + "px";
+  pasek.style.setProperty("--pasek-szer", szerokosc + "px");
+  // Kozetka nie stoi w połowie kadru — przesuwamy pasek o różnicę środków.
+  pasek.style.marginLeft = Math.round((k.srodek / W - 0.5) * kana) + "px";
+  pasek.classList.toggle("wasce", szerokosc < 560);          // bez tytułu
+  pasek.classList.toggle("bardzo-wasce", szerokosc < 320);   // bez etykiet
+}
+
 function dopasuj() {
   const { w: dostW, h: dostH } = dostepneMiejsce();
   if (!dostW || !dostH) return;
@@ -334,6 +387,7 @@ function dopasuj() {
   OKNO = { x: 0, y: 0, w: W, h: H, s };
   cv.style.width = Math.floor(W * s) + "px";
   cv.style.height = Math.floor(H * s) + "px";
+  dopasujPasek();
 }
 window.addEventListener("resize", dopasuj);
 window.addEventListener("load", dopasuj);
@@ -347,6 +401,12 @@ const img = {};
 for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
   const obraz = new Image();
   obraz.onerror = () => { obraz._blad = true; };
+  obraz.onload = () => {                     // znana szerokość kozetki = dobrze skrojony pasek
+    if (klucz === "kozetka" && obraz.naturalWidth) {
+      szerokoscKozetki = obraz.naturalWidth * (GRAFIKI.kozetka.skala || 1);
+    }
+    dopasujPasek();
+  };
   obraz.src = KATALOG_GRAFIK + cfg.plik + "?v=" + Date.now();
   img[klucz] = obraz;
 }
@@ -428,37 +488,11 @@ const dymki = [];
 const czastki = [];
 const napisy = [];
 
-/* Punkty i okrzyki pacjenta wyświetlamy na SAMEJ GÓRZE sceny, ale zawsze
-   w obrębie szerokości kozetki — nigdy nad doktorem, szafą ani za krawędzią
-   kadru. Kolejne efekty po szybkich uderzeniach dokładają się niżej. */
-const GORA_NAPIS = 112, GORA_DYMEK = 180, KROK_STOSU = 44;
-const MARGINES_KOZETKI = 12;
-
-function zakresKozetki() {
-  const cfg = GRAFIKI.kozetka, obraz = img.kozetka;
-  const szerokosc = (obraz && obraz.width && !obraz._blad ? obraz.width : 1024) * (cfg.skala || 1);
-  const lewo = cfg.x + MARGINES_KOZETKI, prawo = cfg.x + szerokosc - MARGINES_KOZETKI;
-  return { lewo, prawo, srodek: (lewo + prawo) / 2 };
-}
-
-// X środka efektu: wyśrodkowany na kozetce i zmieszczony w jej szerokości.
-function wKozetce(x, polowa = 0) {
-  const z = zakresKozetki();
-  const lewo = z.lewo + polowa, prawo = z.prawo - polowa;
-  return prawo > lewo ? Math.max(lewo, Math.min(prawo, x)) : z.srodek;
-}
-
 function dodajDymek(tekst, kolor) {
-  const z = zakresKozetki();
-  dymki.push({ tekst, kolor, x: wKozetce(z.srodek + Math.random() * 160 - 80),
-               y: GORA_DYMEK + Math.min(3, dymki.length) * KROK_STOSU,
-               t0: performance.now(), zycie: 1500 });
+  dymki.push({ tekst, kolor, x: KONTAKT.x - 60 + Math.random() * 40, y: KONTAKT.y - 120, t0: performance.now(), zycie: 1500 });
 }
 function dodajNapis(tekst, kolor) {
-  const z = zakresKozetki();
-  napisy.push({ tekst, kolor, x: z.srodek,
-                y: GORA_NAPIS + Math.min(3, napisy.length) * KROK_STOSU,
-                t0: performance.now(), zycie: 900 });
+  napisy.push({ tekst, kolor, x: KONTAKT.x + 90, y: KONTAKT.y - 60, t0: performance.now(), zycie: 900 });
 }
 function dodajCzastki(n, kolor) {
   for (let i = 0; i < n; i++) {
@@ -480,8 +514,7 @@ function rysujEfekty(czas) {
     const szer = ctx.measureText(d.tekst).width + 26;
     ctx.fillStyle = "rgba(255,255,255,.95)";
     ctx.strokeStyle = d.kolor; ctx.lineWidth = 3;
-    const srodek = wKozetce(d.x, szer / 2);
-    const x = srodek - szer / 2, yy = y - 20, hh = 40, rr = 14;
+    const x = d.x - szer / 2, yy = y - 20, hh = 40, rr = 14;
     ctx.beginPath();
     ctx.moveTo(x + rr, yy);
     ctx.arcTo(x + szer, yy, x + szer, yy + hh, rr);
@@ -493,7 +526,7 @@ function rysujEfekty(czas) {
     ctx.arcTo(x, yy, x + szer, yy, rr);
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#223"; ctx.textAlign = "center";
-    ctx.fillText(d.tekst, srodek, y + 6);
+    ctx.fillText(d.tekst, d.x, y + 6);
     ctx.restore();
   }
   for (let i = napisy.length - 1; i >= 0; i--) {
@@ -503,12 +536,11 @@ function rysujEfekty(czas) {
     ctx.save();
     ctx.globalAlpha = 1 - k;
     ctx.font = "800 30px 'Helvetica Neue', Arial, sans-serif";
-    ctx.textAlign = "center";
-    const x = wKozetce(n.x, ctx.measureText(n.tekst).width / 2), y = n.y - k * 46;
+    ctx.textAlign = "left";
     ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 5;
-    ctx.strokeText(n.tekst, x, y);
+    ctx.strokeText(n.tekst, n.x, n.y - k * 46);
     ctx.fillStyle = n.kolor;
-    ctx.fillText(n.tekst, x, y);
+    ctx.fillText(n.tekst, n.x, n.y - k * 46);
     ctx.restore();
   }
   for (let i = czastki.length - 1; i >= 0; i--) {
