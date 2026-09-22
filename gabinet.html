@@ -21,7 +21,7 @@
     inset: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Interfejs poza sceną: cały gabinet pozostaje widoczny również w pionie. */
+  /* HUD na tle po lewej: cały ekran idzie na kadr 1024x768 (szafa ucięta). */
   #stage {
     width: 100%; height: 100%; height: 100dvh;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
@@ -30,114 +30,97 @@
     user-select: none; -webkit-user-select: none;
   }
   #rama {
-    position: relative; width: 100%; max-width: 1376px; min-width: 0; min-height: 0;
-    display: grid; grid-template-rows: auto auto auto auto; gap: 10px;
+    position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
   }
+  /* HUD leży NA TLE po lewej: zwarty chip z wynikami u góry (nad zlewem)
+     i pasek akcji na dole (pod zlewem). Środkowy pas po lewej
+     (zlew + dozownik) zostaje odsłonięty. */
   #pasek-wynikow {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 10px 16px; color: #fff; background: #193c2e; border-radius: 14px;
+    position: absolute; top: 2%; left: 2%; z-index: 5;
+    display: flex; align-items: center; gap: 12px; max-width: 62%;
+    padding: 8px 12px; color: #fff;
+    background: rgba(20, 46, 35, .82); border-radius: 12px;
+    pointer-events: none; /* dotyk przechodzi do canvasu (oklepywanie) */
   }
-  #tytul-gabinetu { text-align: center; font-weight: 700; color: #b6e7ce; }
-  #tytul-gabinetu small { display: block; margin-top: 4px; font-weight: 400; }
-  .hud { min-width: 72px; }
+  #tytul-gabinetu { text-align: center; font-weight: 700; color: #b6e7ce; font-size: 14px; white-space: nowrap; }
+  #tytul-gabinetu small { display: block; margin-top: 2px; font-weight: 400; font-size: 11px; }
+  .hud { min-width: 0; }
   #hud-prawo { text-align: right; }
-  .hud .etykieta { font-size: 11px; letter-spacing: .12em; opacity: .85; text-transform: uppercase; }
-  .hud .wartosc { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; line-height: 1.1; }
-  #combo-wrap { min-height: 22px; opacity: 0; transition: opacity .15s; }
+  .hud .etykieta { font-size: 10px; letter-spacing: .12em; opacity: .85; text-transform: uppercase; }
+  .hud .wartosc { font-size: clamp(20px, 3vw, 34px); font-weight: 800; line-height: 1.1; white-space: nowrap; }
+  #combo-wrap { min-height: 18px; opacity: 0; transition: opacity .15s; white-space: nowrap; }
   #combo-wrap.on { opacity: 1; }
-  #combo-wartosc { color: #ffd23f; font-size: 16px; }
+  #combo-wartosc { color: #ffd23f; font-size: 14px; }
   #czas-wartosc.duzo { color: #ff6b6b; }
   #widok {
-    min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center;
+    position: relative; flex: 0 0 auto; min-width: 0; min-height: 0;
     background: #142e23; border-radius: 12px; overflow: hidden;
   }
   canvas {
-    /* CSS skaluje scene dynamicznie do kazdego ekranu (pion/poziom) nawet bez JS:
-       element wypelnia #widok, a object-fit zawiera caly gabinet bez przycinania. */
-    display: block; width: 100%; height: 100%; object-fit: contain;
+    /* Rozmiar w px ustawia dopasuj() — element wypełnia #widok 1:1,
+       więc nakładki pozycjonowane w % mapują się wprost na scenę. */
+    display: block; width: 100%; height: 100%;
     cursor: pointer; touch-action: none; border-radius: 6px;
   }
+  #panel-dol {
+    position: absolute; left: 2%; bottom: 2%; z-index: 5;
+    display: flex; align-items: stretch; gap: 8px; max-width: 96%;
+  }
   #btn-oklep {
-    width: 100%; min-height: 64px; padding: 12px; border: 1px solid #4db981; border-radius: 14px;
-    background: #23774d; color: #fff; font: inherit; font-size: 20px; font-weight: 800;
+    flex: 1 1 auto; min-width: 118px; max-width: 260px;
+    min-height: 52px; padding: 8px 14px;
+    border: 1px solid #4db981; border-radius: 12px;
+    background: rgba(35, 119, 77, .92); color: #fff;
+    font: inherit; font-size: 17px; font-weight: 800; white-space: nowrap;
     cursor: pointer; touch-action: manipulation;
   }
-  #btn-oklep small { display: block; font-size: 12px; font-weight: 400; margin-top: 5px; color: #d4f8e3; }
+  #btn-oklep small { display: block; font-size: 11px; font-weight: 400; margin-top: 2px; color: #d4f8e3; }
   #btn-oklep:active { background: #319b67; }
-  #przyciski { display: flex; gap: 8px; justify-content: center; }
+  #btn-oklep:disabled { opacity: .55; cursor: default; }
+  #przyciski { display: flex; gap: 8px; }
   #przyciski button, #przyciski a.dom {
-    font: inherit; font-weight: 700; font-size: 14px; min-height: 44px; min-width: 44px;
-    padding: 8px 12px; border-radius: 999px; border: 1px solid #537664;
-    background: #193c2e; color: #fff; cursor: pointer;
+    font: inherit; font-weight: 700; font-size: 14px; min-height: 52px; min-width: 48px;
+    padding: 8px 10px; border-radius: 12px; border: 1px solid #537664;
+    background: rgba(25, 60, 46, .92); color: #fff; cursor: pointer; white-space: nowrap;
     text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
   }
   #przyciski button:hover, #przyciski a.dom:hover { background: #285b43; }
   button:focus-visible, a:focus-visible { outline: 3px solid #ffd23f; outline-offset: 2px; }
-  @media (max-width: 420px) {
-    #tytul-gabinetu { font-size: 13px; }
-    #tytul-gabinetu small { font-size: 11px; }
-    #pasek-wynikow { padding: 10px; gap: 6px; }
-  }
-  @media (max-height: 500px) and (orientation: landscape) {
-    #rama { gap: 4px; }
-    #pasek-wynikow { padding: 4px 12px; }
-    .hud .wartosc { font-size: 24px; }
-    #combo-wrap { min-height: 0; height: 18px; }
-    #btn-oklep { display: none; }
-  }
-
-  /* ---------- MOBILE PATCH: poprawki dla telefonow ---------- */
+  /* ---------- MOBILE: nakładki mniejsze, tytuł chowany ---------- */
   @media (max-width: 600px) {
     #stage { padding: 4px; }
-    #rama { gap: 6px; }
-    #pasek-wynikow { padding: 8px 10px; border-radius: 10px; }
-    .hud .wartosc { font-size: clamp(22px, 5vw, 32px); }
-    #combo-wartosc { font-size: 14px; }
+    #pasek-wynikow { padding: 6px 10px; gap: 10px; border-radius: 10px; max-width: 70%; }
+    #tytul-gabinetu { display: none; }   /* wąsko: same liczby */
+    .hud .wartosc { font-size: 22px; }
+    #combo-wartosc { font-size: 13px; }
     #widok { border-radius: 8px; }
     canvas { border-radius: 4px; }
-    #btn-oklep {
-      min-height: 56px; padding: 10px; font-size: 18px; border-radius: 10px;
-    }
-    #btn-oklep small { font-size: 11px; margin-top: 3px; }
+    #panel-dol { gap: 6px; }
+    #btn-oklep { min-height: 50px; padding: 6px 12px; font-size: 16px; min-width: 0; }
     #przyciski { gap: 6px; }
     #przyciski button, #przyciski a.dom {
-      min-height: 40px; min-width: 40px; padding: 6px 10px; font-size: 13px;
+      min-height: 50px; min-width: 44px; padding: 6px 8px; font-size: 13px;
     }
   }
   @media (max-width: 400px) {
-    #tytul-gabinetu { font-size: 12px; }
-    #tytul-gabinetu small { font-size: 10px; }
-    .hud .etykieta { font-size: 10px; }
-    #btn-oklep { min-height: 52px; font-size: 16px; }
+    .hud .etykieta { font-size: 9px; }
+    .hud .wartosc { font-size: 20px; }
+    #btn-oklep { min-height: 48px; font-size: 15px; }
+    #btn-oklep small { display: none; }
+    #przyciski button, #przyciski a.dom { min-height: 48px; min-width: 42px; }
   }
-
-  /* ---------- PUNKTY NAD KOZETKĄ ----------
-     Punkty i czas są NA GÓRZE, ale w obrębie szerokości kozetki: szerokość
-     i przesunięcie paska wylicza dopasujPasek() (dociąga pasek do krawędzi
-     kozetki w kadrze i utrzymuje zbieżność z letterboxem canvasu). */
-  #pasek-wynikow {
-    justify-self: center; width: 100%; min-width: 0; max-width: 100%;
-    flex-wrap: nowrap; gap: clamp(4px, 1.2vw, 14px); padding: 8px clamp(6px, 1.4vw, 16px);
+  @media (max-height: 500px) and (orientation: landscape) {
+    /* Nakładki zostają widoczne (gra się na nich nie opiera — canvas też klika),
+       tylko ciaśniej, żeby nie zjadły niskiego kadru. */
+    #pasek-wynikow { padding: 4px 10px; gap: 8px; }
+    .hud .wartosc { font-size: 20px; }
+    #combo-wrap { min-height: 0; }
+    #tytul-gabinetu { display: none; }
+    #btn-oklep { min-height: 44px; font-size: 15px; padding: 4px 10px; }
+    #btn-oklep small { display: none; }
+    #przyciski button, #przyciski a.dom { min-height: 44px; min-width: 42px; }
   }
-  #pasek-wynikow.wasce #tytul-gabinetu { display: none; }   /* wąsko: same liczby */
-  #pasek-wynikow.wasce .hud { flex: 1 1 auto; }
-  #pasek-wynikow.bardzo-wasce .etykieta { display: none; }   /* najwężiej: bez opisów */
-  #pasek-wynikow.bardzo-wasce #combo-wrap { display: none; }
-  #pasek-wynikow .hud { min-width: 0; flex: 0 1 auto; }
-  #pasek-wynikow .hud .wartosc {
-    font-size: clamp(14px, calc(var(--pasek-szer, 600px) * .072), 40px);
-    white-space: nowrap; line-height: 1.05;
-  }
-  #pasek-wynikow .hud .etykieta { font-size: clamp(8px, calc(var(--pasek-szer, 600px) * .021), 12px); }
-  #pasek-wynikow #tytul-gabinetu {
-    font-size: clamp(10px, calc(var(--pasek-szer, 600px) * .026), 17px);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  #pasek-wynikow #tytul-gabinetu small { font-size: .82em; }
-  #pasek-wynikow #combo-wrap {
-    min-height: clamp(14px, calc(var(--pasek-szer, 600px) * .036), 22px);  /* bez skakania sceny */
-  }
-  #pasek-wynikow #combo-wartosc { font-size: clamp(10px, calc(var(--pasek-szer, 600px) * .03), 18px); }
 
   /* ---------- ekrany (start / koniec) ---------- */
   .ekran {
@@ -205,33 +188,34 @@
 <body>
 <div id="stage">
   <div id="rama">
-    <header id="pasek-wynikow">
+    <div id="widok"><canvas id="gra" width="1024" height="768" aria-label="Gabinet doktora — dotknij, aby oklepać plecy pacjenta"></canvas>
+      <header id="pasek-wynikow">
 
-    <div class="hud" id="hud-lewo">
-      <div class="etykieta">Punkty</div>
-      <div class="wartosc" id="punkty-wartosc">0</div>
-      <div id="combo-wrap"><span class="etykieta">Seria</span> <span class="wartosc" id="combo-wartosc">x1.0</span></div>
-    </div>
-    <div id="tytul-gabinetu">Gabinet Dr. Leszka<small>Mistrz Oklepywania</small></div>
-    <div class="hud" id="hud-prawo">
-      <div class="etykieta">Czas</div>
-      <div class="wartosc" id="czas-wartosc">60</div>
-    </div>
+      <div class="hud" id="hud-lewo">
+        <div class="etykieta">Punkty</div>
+        <div class="wartosc" id="punkty-wartosc">0</div>
+        <div id="combo-wrap"><span class="etykieta">Seria</span> <span class="wartosc" id="combo-wartosc">x1.0</span></div>
+      </div>
+      <div id="tytul-gabinetu">Gabinet Dr. Leszka<small>Mistrz Oklepywania</small></div>
+      <div class="hud" id="hud-prawo">
+        <div class="etykieta">Czas</div>
+        <div class="wartosc" id="czas-wartosc">60</div>
+      </div>
 
-    </header>
-    <div id="widok"><canvas id="gra" width="1376" height="768" aria-label="Gabinet doktora — dotknij, aby oklepać plecy pacjenta"></canvas></div>
-    <button id="btn-oklep" disabled>Oklep plecy<small>Dotykaj w równym rytmie • idealnie co 0,6 sekundy</small></button>
+      </header>
+      <div id="panel-dol">
+        <button id="btn-oklep" disabled>Oklep plecy<small>Dotykaj w równym rytmie • idealnie co 0,6 sekundy</small></button>
 
-    <audio id="muzyka-gabinetu" src="Leszek.mp3" loop preload="auto" aria-label="Muzyka gabinetu"></audio>
+        <div id="przyciski">
+          <button id="btn-dzwiek" title="Muzyka" aria-label="Muzyka">🔊</button>
+          <button id="btn-restart" title="Od nowa" aria-label="Rozpocznij od nowa">🔁</button>
+          <a class="dom" href="index.html" title="Strona główna">🏠 Strona główna</a>
+        </div>
+      </div>
 
-    <div id="przyciski">
-      <button id="btn-dzwiek" title="Muzyka" aria-label="Muzyka">🔊</button>
-      <button id="btn-restart" title="Od nowa" aria-label="Rozpocznij od nowa">🔁</button>
-      <a class="dom" href="index.html" title="Strona główna">🏠 Strona główna</a>
-    </div>
+      <audio id="muzyka-gabinetu" src="Leszek.mp3" loop preload="auto" aria-label="Muzyka gabinetu"></audio>
 
-
-    <div class="ekran" id="ekran-start">
+      <div class="ekran" id="ekran-start">
       <h1>🖐️ Gabinet Dr. Leszka<br>Mistrz Oklepywania</h1>
       <p>Pacjent leży na kozetce i czeka na <strong>relaksujący masaż pleców</strong>.
          Dotykaj przycisku „Oklep plecy” lub gabinetu (na komputerze także spacja), aby oklepać go dłonią — ale w dobrym rytmie!</p>
@@ -248,6 +232,7 @@
       <button class="przycisk-duzy" id="btn-ponownie">🔁 Zagraj ponownie</button>
       <a class="przycisk-dom" href="index.html">🏠 Powrót do strony głównej</a>
     </div>
+    </div>
   </div>
 </div>
 
@@ -255,7 +240,10 @@
 "use strict";
 /* =====================================================================
    GABINET DR. LESZEKA — konfiguracja sceny
-   Canvas 1376x768. Grafiki to osobne pliki PNG z images/gabinet/ —
+   Canvas 1024x768: kadr ucięty z prawej (szafa poza kadrem), lewa strona
+   i wszystkie współrzędne postaci BEZ ZMIAN — rysowanie tych samych
+   pozycji na węższym canvasie samo przycina prawą część tła.
+   Grafiki to osobne pliki PNG z images/gabinet/ —
    mozesz je podmieniac wlasnymi (nazwy plikow musza zostac te same).
    ===================================================================== */
 
@@ -337,55 +325,18 @@ const stan = {
 };
 
 /* ---------- Dynamiczne skalowanie sceny (contain; smartfon pion/poziom) ----------
-   CAŁY gabinet 1376x768 jest zawsze w całości widoczny — scena skaluje się
-   do wolnego miejsca po odjęciu HUD/przycisków, niezależnie od orientacji.
-   Układ wyśrodkowuje wiersze pionowo, więc nie ma martwych pasów nad/pod. */
+   HUD i przyciski leżą NA TLE (nakładki w #widok), więc cała powierzchnia
+   ekranu idzie na kadr 1024x768 — scena skaluje się do wolnego miejsca
+   bez odejmowania wierszy menu. #widok ma dokładnie rozmiar canvasu,
+   dzięki czemu nakładki w % mapują się wprost na współrzędne sceny. */
 let OKNO = { x: 0, y: 0, w: W, h: H, s: 1 };
 
 function dostepneMiejsce() {
-  if (typeof getComputedStyle === "function") {
-    const stage = document.getElementById("stage");
-    const rama = document.getElementById("rama");
-    const ss = getComputedStyle(stage), rs = getComputedStyle(rama);
-    const gap = parseFloat(rs.rowGap) || 0;
-    // Dwa odstępy między 3 stałymi wierszami + 1 gdy widoczny przycisk Oklep.
-    let zajete = parseFloat(ss.paddingTop) + parseFloat(ss.paddingBottom) + 2 * gap;
-    zajete += document.getElementById("pasek-wynikow").offsetHeight;
-    zajete += document.getElementById("przyciski").offsetHeight;
-    const btn = document.getElementById("btn-oklep");
-    if (btn.offsetHeight > 0) zajete += btn.offsetHeight + gap;
-    const w = stage.clientWidth - parseFloat(ss.paddingLeft) - parseFloat(ss.paddingRight);
-    const h = stage.clientHeight - zajete;
-    if (w > 0 && h > 0) return { w, h };
-  }
-  const widok = document.getElementById("widok");
-  return { w: widok.clientWidth, h: widok.clientHeight };
-}
-
-/* Rozpiętość kozetki w kadrze (px sceny) wyznacza, gdzie stoi pasek wyników.
-   Znacznik aktualizujemy po wczytaniu PNG (onload niżej), więc podmiana grafiki
-   kozetki nie rozjedna paska ze sceną. */
-let szerokoscKozetki = 1024 * (GRAFIKI.kozetka.skala || 1);
-function zakresKozetki() {
-  const cfg = GRAFIKI.kozetka;
-  return { lewo: cfg.x, prawo: cfg.x + szerokoscKozetki, srodek: cfg.x + szerokoscKozetki / 2 };
-}
-
-/* Pasek „Punkty / Czas” na górze, ale dokładnie w obrębie szerokości kozetki. */
-function dopasujPasek() {
-  const pasek = document.getElementById("pasek-wynikow");
-  if (!pasek || !OKNO.s) return;
-  const k = zakresKozetki();
-  const kana = W * OKNO.s;                              // szerokość sceny na ekranie
-  const rama = document.getElementById("rama");
-  const dostepne = (rama && rama.clientWidth) ? rama.clientWidth : kana;
-  const szerokosc = Math.min(dostepne, Math.round((k.prawo - k.lewo) / W * kana));
-  pasek.style.width = szerokosc + "px";
-  pasek.style.setProperty("--pasek-szer", szerokosc + "px");
-  // Kozetka nie stoi w połowie kadru — przesuwamy pasek o różnicę środków.
-  pasek.style.marginLeft = Math.round((k.srodek / W - 0.5) * kana) + "px";
-  pasek.classList.toggle("wasce", szerokosc < 560);          // bez tytułu
-  pasek.classList.toggle("bardzo-wasce", szerokosc < 320);   // bez etykiet
+  const stage = document.getElementById("stage");
+  const ss = getComputedStyle(stage);
+  const w = stage.clientWidth - parseFloat(ss.paddingLeft) - parseFloat(ss.paddingRight);
+  const h = stage.clientHeight - parseFloat(ss.paddingTop) - parseFloat(ss.paddingBottom);
+  return { w, h };
 }
 
 function dopasuj() {
@@ -393,15 +344,18 @@ function dopasuj() {
   if (!dostW || !dostH) return;
   const s = Math.min(dostW / W, dostH / H);
   OKNO = { x: 0, y: 0, w: W, h: H, s };
-  cv.style.width = Math.floor(W * s) + "px";
-  cv.style.height = Math.floor(H * s) + "px";
-  dopasujPasek();
+  const cw = Math.floor(W * s) + "px", ch = Math.floor(H * s) + "px";
+  cv.style.width = cw;
+  cv.style.height = ch;
+  const widok = document.getElementById("widok");
+  widok.style.width = cw;
+  widok.style.height = ch;
 }
 window.addEventListener("resize", dopasuj);
 window.addEventListener("load", dopasuj);
 window.addEventListener("orientationchange", dopasuj);
 if (window.visualViewport) window.visualViewport.addEventListener("resize", dopasuj);
-if (window.ResizeObserver) new ResizeObserver(dopasuj).observe(document.getElementById("widok"));
+if (window.ResizeObserver) new ResizeObserver(dopasuj).observe(document.getElementById("stage"));
 dopasuj();
 
 /* ---------- wczytywanie grafik (znacznik ?v= zawsze swiezy) ---------- */
@@ -409,12 +363,6 @@ const img = {};
 for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
   const obraz = new Image();
   obraz.onerror = () => { obraz._blad = true; };
-  obraz.onload = () => {                    // znana szerokość kozetki = dobrze skrojony pasek
-    if (klucz === "kozetka" && obraz.naturalWidth && !obraz._blad) {
-      szerokoscKozetki = obraz.naturalWidth * (GRAFIKI.kozetka.skala || 1);
-    }
-    dopasujPasek();
-  };
   obraz.src = KATALOG_GRAFIK + cfg.plik + "?v=" + Date.now();
   img[klucz] = obraz;
 }
@@ -715,7 +663,8 @@ function klatka(czas) {
   const dt = Math.min(0.05, (czas - poprzedniCzas) / 1000 || 0);
   poprzedniCzas = czas;
 
-  // Zawsze pełna scena 1376x768 (skalowanie robi CSS na elemencie canvas).
+  // Kadr 1024x768, współrzędne sceny bez zmian: prawa część tła (szafa)
+  // jest po prostu przycięta krawędzią canvasu. Skalowanie robi dopasuj().
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, W, H);
   rysuj(img.tlo, 0, 0);
