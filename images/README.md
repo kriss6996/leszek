@@ -29,6 +29,25 @@ przez GitHuba.
 | `ghost2.png`     | duch 2 (domyślnie różowy)       | |
 | `ghost3.png`     | duch 3 (domyślnie błękitny)     | |
 | `ghost4.png`     | duch 4 (domyślnie pomarańczowy) | |
+| `tlo.png`         | **tło gry** — własne zdjęcie za labiryntem | **opcjonalny** — patrz niżej |
+
+## 🌄 Tło gry (`tlo.png`) — własne zdjęcie za labiryntem
+
+Nowa funkcja: planszę można położyć na **własnym zdjęciu**.
+
+1. Wgraj plik **`images/tlo.png`** („Add file → Upload files”, jak wyżej) — gra wczyta go
+   automatycznie przy starcie, u wszystkich graczy.
+2. Albo w samej grze kliknij **🖼️ → „Tło gry 🌄 (własne zdjęcie)” → „wybierz”** — zdjęcie
+   zapisze się w Twojej przeglądarce (localStorage) i będzie widoczne tylko u Ciebie.
+   Zdjęcie jest automatycznie zmniejszane do maks. **1024 px** (żeby nie zapchać pamięci
+   przeglądarki) i lekko **przyciemniane (45%)** w grze, dzięki czemu białe korytarze
+   i białe liczby „69” zostają czytelne na każdym tle.
+
+**Kolejność ważności tła jest taka sama jak przy postaciach:**
+1. zdjęcie wgrane w grze 🖼️ (Twoja przeglądarka), 2. `images/tlo.png`, 3. czarne tło domyślne.
+
+> Wskazówka: najlepiej sprawdzają się zdjęcia niezbyt jasne i niezbyt „zatłoczone” —
+> wtedy labirynt i „69” odcinają się od tła najmocniej.
 
 **Brak pliku = nic się nie psuje.** Jeśli któregoś pliku nie ma (błąd 404), gra po cichu
 użyje dotychczasowej grafiki — bez błędów i bez pustych kwadratów. W szczególności:
