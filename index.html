@@ -235,6 +235,59 @@
                 text-align: center;
             }
         }
+
+        /* PIN do gabinetu — przycisk w menu nie otwiera gry bez kodu. */
+        .pin-modal {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px; background: rgba(15, 23, 42, .62);
+            overflow-y: auto;
+        }
+        .pin-modal[hidden] { display: none !important; }
+        .pin-modal-karta {
+            width: min(420px, 100%);
+            background: #fff; color: #222; border-radius: 16px;
+            padding: 22px 18px 18px; margin: auto;
+            box-shadow: 0 18px 50px rgba(0,0,0,.28); text-align: center;
+        }
+        .pin-modal-karta h2 { margin: 0 0 8px; color: #007bff; font-size: 24px; }
+        .pin-modal-karta p { margin: 0 0 12px; color: #444; }
+        .pin-modal-karta label { display: block; font-weight: bold; margin-bottom: 6px; }
+        #pin-gabinetu-wejscie {
+            width: 100%; max-width: 200px;
+            font-size: 28px; font-weight: 800; letter-spacing: .4em;
+            text-align: center; padding: 10px 8px 10px 16px;
+            border: 2px solid #ccc; border-radius: 10px; box-sizing: border-box;
+            -webkit-text-security: disc; text-security: disc;
+        }
+        #pin-gabinetu-wejscie:focus { outline: 3px solid #007bff; outline-offset: 2px; }
+        #pin-gabinetu-wejscie.zly { border-color: #dc3545; animation: pin-shake .35s linear; }
+        .pin-blad { color: #dc3545; font-weight: 700; min-height: 1.2em; margin: 8px 0; }
+        .pin-klaw-menu {
+            display: grid; grid-template-columns: repeat(3, 64px); gap: 8px;
+            justify-content: center; margin: 12px 0 4px;
+        }
+        .pin-klaw-menu button {
+            font: inherit; font-size: 20px; font-weight: 800; min-height: 46px;
+            border-radius: 12px; border: 1px solid #ddd; background: #f4f5f7;
+            color: #222; cursor: pointer; touch-action: manipulation;
+        }
+        .pin-klaw-menu button:active { background: #e7f3ff; }
+        .pin-akcje { display: flex; gap: 10px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+        .pin-akcje button {
+            font: inherit; font-weight: 800; border: none; border-radius: 999px;
+            padding: 10px 18px; min-height: 44px; cursor: pointer;
+        }
+        .pin-akcje button[type="submit"] { background: #ec4899; color: #fff; }
+        .pin-akcje button[type="submit"]:hover { background: #db2777; }
+        .pin-akcje button[type="button"] { background: #e9ecef; color: #333; }
+        @keyframes pin-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
     </style>
 </head>
 
@@ -245,7 +298,7 @@
             <h1>TwójOtwór.pl</h1>
             <div class="game-buttons">
                 <a class="game-button" href="gra.html">🐖👈 Zagraj: DR. LESZEK PAC-MAN 69!</a>
-                <a class="game-button" href="gabinet.html">🐖🖐️ Zagraj: GABINET DR. LESZEKA!</a>
+                <a class="game-button" id="link-gabinet" href="gabinet.html" title="Wymaga PIN-u" aria-haspopup="dialog" aria-controls="pin-gabinetu">🐖🖐️ Zagraj: GABINET DR. LESZEKA!</a>
             </div>
         </div>
     </header>
@@ -399,5 +452,167 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
             <p><small>TwójOtwór.pl © 2025 </p>
         </footer>
     </div>
+
+    <div id="pin-gabinetu" class="pin-modal" hidden>
+        <div class="pin-modal-karta" role="dialog" aria-modal="true" aria-labelledby="pin-gabinetu-tytul">
+            <h2 id="pin-gabinetu-tytul">🔒 Gabinet zamknięty</h2>
+            <p>Wpisz PIN, żeby wejść do gry.</p>
+            <form id="form-pin-gabinetu" autocomplete="off" method="post" action="#">
+                <label for="pin-gabinetu-wejscie">PIN</label>
+                <input id="pin-gabinetu-wejscie" name="gabinet-pin" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="4" enterkeyhint="go" pattern="[0-9]*" aria-label="PIN do gabinetu">
+                <div class="pin-klaw-menu" id="pin-gabinetu-klaw">
+                    <button type="button" tabindex="-1" data-cyfra="1">1</button>
+                    <button type="button" tabindex="-1" data-cyfra="2">2</button>
+                    <button type="button" tabindex="-1" data-cyfra="3">3</button>
+                    <button type="button" tabindex="-1" data-cyfra="4">4</button>
+                    <button type="button" tabindex="-1" data-cyfra="5">5</button>
+                    <button type="button" tabindex="-1" data-cyfra="6">6</button>
+                    <button type="button" tabindex="-1" data-cyfra="7">7</button>
+                    <button type="button" tabindex="-1" data-cyfra="8">8</button>
+                    <button type="button" tabindex="-1" data-cyfra="9">9</button>
+                    <button type="button" tabindex="-1" data-akcja="usun" aria-label="Usuń cyfrę">⌫</button>
+                    <button type="button" tabindex="-1" data-cyfra="0">0</button>
+                    <button type="button" tabindex="-1" data-akcja="czysc" aria-label="Wyczyść">C</button>
+                </div>
+                <p id="pin-gabinetu-blad" class="pin-blad" role="alert" hidden>Zły PIN. Spróbuj jeszcze raz.</p>
+                <div class="pin-akcje">
+                    <button type="button" id="pin-gabinetu-anuluj">Anuluj</button>
+                    <button type="submit">Wejdź</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+    "use strict";
+    (function () {
+      const PIN_GABINETU = "6969";
+      const KLUCZ_BILETU = "gabinet_wstep";
+      const link = document.getElementById("link-gabinet");
+      const modal = document.getElementById("pin-gabinetu");
+      const karta = modal ? modal.querySelector(".pin-modal-karta") : null;
+      const form = document.getElementById("form-pin-gabinetu");
+      const wejscie = document.getElementById("pin-gabinetu-wejscie");
+      const blad = document.getElementById("pin-gabinetu-blad");
+      const klaw = document.getElementById("pin-gabinetu-klaw");
+      const anuluj = document.getElementById("pin-gabinetu-anuluj");
+      if (!link || !modal || !form || !wejscie) return;
+
+      let przechodze = false;
+
+      function pinZgadzaSie(wpis) {
+        const a = String(wpis || "").replace(/\D/g, "");
+        if (a.length !== PIN_GABINETU.length) return false;
+        let roznica = 0;
+        for (let i = 0; i < PIN_GABINETU.length; i++) roznica |= a.charCodeAt(i) ^ PIN_GABINETU.charCodeAt(i);
+        return roznica === 0;
+      }
+
+      function otworz() {
+        przechodze = false;
+        modal.hidden = false;
+        if (blad) blad.hidden = true;
+        wejscie.classList.remove("zly");
+        wejscie.removeAttribute("aria-invalid");
+        wejscie.value = "";
+        wejscie.focus();
+      }
+
+      function zamknij() {
+        modal.hidden = true;
+        link.focus();
+      }
+
+      function wyslijPin(formularz) {
+        if (typeof formularz.requestSubmit === "function") formularz.requestSubmit();
+        else formularz.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      }
+
+      function pokazBlad(tekst) {
+        if (blad) {
+          blad.textContent = tekst;
+          blad.hidden = false;
+        }
+        wejscie.setAttribute("aria-invalid", "true");
+        wejscie.classList.remove("zly");
+        void wejscie.offsetWidth;
+        wejscie.classList.add("zly");
+        wejscie.value = "";
+        wejscie.focus();
+      }
+
+      link.addEventListener("click", (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        otworz();
+      });
+
+      anuluj.addEventListener("click", zamknij);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) zamknij();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (modal.hidden) return;
+        if (e.key === "Escape") {
+          e.preventDefault();
+          zamknij();
+          return;
+        }
+        if (e.key !== "Tab" || !karta) return;
+        const pola = [wejscie, anuluj, form.querySelector('button[type="submit"]')].filter(Boolean);
+        const pierwszy = pola[0];
+        const ostatni = pola[pola.length - 1];
+        if (e.shiftKey && document.activeElement === pierwszy) {
+          e.preventDefault();
+          ostatni.focus();
+        } else if (!e.shiftKey && document.activeElement === ostatni) {
+          e.preventDefault();
+          pierwszy.focus();
+        }
+      });
+
+      wejscie.addEventListener("input", () => {
+        const cyfry = wejscie.value.replace(/\D/g, "").slice(0, 4);
+        if (wejscie.value !== cyfry) wejscie.value = cyfry;
+        if (blad && !blad.hidden) {
+          blad.hidden = true;
+          wejscie.removeAttribute("aria-invalid");
+        }
+        if (cyfry.length === 4) wyslijPin(form);
+      });
+
+      if (klaw) {
+        klaw.addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          if (!btn) return;
+          if (btn.dataset.cyfra) {
+            if (wejscie.value.length >= 4) return;
+            wejscie.value += btn.dataset.cyfra;
+          } else if (btn.dataset.akcja === "usun") {
+            wejscie.value = wejscie.value.slice(0, -1);
+          } else if (btn.dataset.akcja === "czysc") {
+            wejscie.value = "";
+          } else return;
+          wejscie.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (przechodze) return;
+        const cyfry = wejscie.value.replace(/\D/g, "");
+        if (cyfry.length !== 4) {
+          pokazBlad("Wpisz 4-cyfrowy PIN.");
+          return;
+        }
+        if (!pinZgadzaSie(cyfry)) {
+          pokazBlad("Zły PIN. Spróbuj jeszcze raz.");
+          return;
+        }
+        przechodze = true;
+        try { sessionStorage.setItem(KLUCZ_BILETU, String(Date.now())); } catch (err) {}
+        window.location.href = "gabinet.html";
+      });
+    })();
+    </script>
 </body>
 </html>

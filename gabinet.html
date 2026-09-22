@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="zablokowany">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Gabinet Dr. Leszka — Mistrz Oklepywania! 🖐️</title>
+<title>Gabinet zamknięty — wpisz PIN</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -189,10 +189,99 @@
     .przycisk-dom { font-size: clamp(11px, 2vw, 16px); min-height: 40px; }
     #ekran-koniec .wynik-koniec { font-size: clamp(28px, 8vw, 60px); }
   }
+
+  /* Bramka PIN: dopóki <html> ma klasę zablokowany, gry nie widać i nie da się jej ruszyć. */
+  html.zablokowany #stage { visibility: hidden; }
+  html:not(.zablokowany) #bramka-pin { display: none !important; }
+  #bramka-pin {
+    position: absolute; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    overflow-y: auto;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    background: #10241c; color: #fff;
+  }
+  #bramka-pin[hidden] { display: none !important; }
+  #bramka-pin .karta {
+    width: min(420px, 100%);
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    text-align: center; margin: auto;
+    background: rgba(20, 46, 35, .96);
+    border: 1px solid #4db981; border-radius: 18px;
+    padding: 24px 18px 18px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  }
+  #bramka-pin h1 { margin: 0; font-size: clamp(22px, 5vw, 32px); line-height: 1.15; text-shadow: none; }
+  #bramka-pin p { margin: 0; font-size: 15px; line-height: 1.4; max-width: 28em; }
+  #form-pin { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  #bramka-pin label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+  #pin-wejscie {
+    width: 100%; max-width: 220px;
+    font: inherit; font-size: 28px; font-weight: 800; letter-spacing: .42em;
+    text-align: center; padding: 10px 8px 10px 16px;
+    border-radius: 12px; border: 2px solid #537664;
+    background: #0c1c16; color: #fff; min-height: 52px;
+    -webkit-text-security: disc; text-security: disc;
+  }
+  #pin-wejscie:focus-visible { outline: 3px solid #ffd23f; outline-offset: 2px; }
+  #pin-wejscie.zly { border-color: #ff6b6b; animation: pin-shake .35s linear; }
+  @keyframes pin-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  #pin-blad { color: #ff8b8b; font-weight: 700; min-height: 1.2em; }
+  .pin-klaw {
+    display: grid; grid-template-columns: repeat(3, 68px); gap: 8px;
+    justify-content: center; margin-top: 2px;
+  }
+  .pin-klaw button {
+    font: inherit; font-size: 22px; font-weight: 800; min-height: 48px;
+    border-radius: 12px; border: 1px solid #537664;
+    background: rgba(25, 60, 46, .92); color: #fff; cursor: pointer;
+    touch-action: manipulation;
+  }
+  .pin-klaw button:active { background: #285b43; }
+  @media (max-height: 700px) {
+    #bramka-pin .karta { padding: 14px 12px; gap: 8px; }
+    #bramka-pin h1 { font-size: 22px; }
+    #bramka-pin p { font-size: 13px; }
+    #pin-wejscie { min-height: 44px; font-size: 22px; }
+    .pin-klaw { grid-template-columns: repeat(3, 56px); gap: 6px; }
+    .pin-klaw button { min-height: 40px; font-size: 18px; }
+  }
 </style>
 </head>
 <body>
-<div id="stage">
+<div id="bramka-pin" role="dialog" aria-modal="true" aria-labelledby="pin-tytul" aria-describedby="pin-opis">
+  <div class="karta">
+    <h1 id="pin-tytul">🔒 Gabinet zamknięty</h1>
+    <p id="pin-opis">Wpisz PIN, żeby wejść do gry.</p>
+    <form id="form-pin" autocomplete="off" method="post" action="#">
+      <label for="pin-wejscie">PIN</label>
+      <input id="pin-wejscie" name="gabinet-pin" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="4" enterkeyhint="go" pattern="[0-9]*" aria-label="PIN do gabinetu">
+      <div class="pin-klaw" id="pin-klaw">
+        <button type="button" tabindex="-1" data-cyfra="1">1</button>
+        <button type="button" tabindex="-1" data-cyfra="2">2</button>
+        <button type="button" tabindex="-1" data-cyfra="3">3</button>
+        <button type="button" tabindex="-1" data-cyfra="4">4</button>
+        <button type="button" tabindex="-1" data-cyfra="5">5</button>
+        <button type="button" tabindex="-1" data-cyfra="6">6</button>
+        <button type="button" tabindex="-1" data-cyfra="7">7</button>
+        <button type="button" tabindex="-1" data-cyfra="8">8</button>
+        <button type="button" tabindex="-1" data-cyfra="9">9</button>
+        <button type="button" tabindex="-1" data-akcja="usun" aria-label="Usuń cyfrę">⌫</button>
+        <button type="button" tabindex="-1" data-cyfra="0">0</button>
+        <button type="button" tabindex="-1" data-akcja="czysc" aria-label="Wyczyść">C</button>
+      </div>
+      <p id="pin-blad" role="alert" hidden>Zły PIN. Spróbuj jeszcze raz.</p>
+      <button class="przycisk-duzy" type="submit">Wejdź</button>
+    </form>
+    <a class="przycisk-dom" href="index.html">🏠 Powrót do strony głównej</a>
+  </div>
+</div>
+<div id="stage" inert aria-hidden="true">
   <div id="rama">
     <div id="widok"><canvas id="gra" width="1024" height="768" aria-label="Gabinet doktora — dotknij, aby oklepać plecy pacjenta"></canvas>
       <header id="pasek-wynikow">
@@ -219,7 +308,7 @@
         </div>
       </div>
 
-      <audio id="muzyka-gabinetu" src="Leszek.mp3" loop preload="auto" aria-label="Muzyka gabinetu"></audio>
+      <audio id="muzyka-gabinetu" loop preload="none" aria-label="Muzyka gabinetu"></audio>
 
       <div class="ekran" id="ekran-start">
       <h1>🖐️ Gabinet Dr. Leszka<br>Mistrz Oklepywania</h1>
@@ -244,6 +333,70 @@
 
 <script>
 "use strict";
+/* Wejście do gry tylko po PIN-ie 6969.
+   Sam adres gabinet.html oraz przycisk w menu nie odsłaniają rozgrywki:
+   scena, skróty, start i muzyka są zablokowane, dopóki kod nie przejdzie. */
+const PIN_GABINETU = "6969";
+const KLUCZ_BILETU = "gabinet_wstep";
+const BILET_WAZNY_MS = 60000;
+const TYTUL_GRY = "Gabinet Dr. Leszka — Mistrz Oklepywania! 🖐️";
+let gabinetOdblokowany = false;
+
+function pinZgadzaSie(wpis) {
+  const a = String(wpis || "").replace(/\D/g, "");
+  if (a.length !== PIN_GABINETU.length) return false;
+  let roznica = 0;
+  for (let i = 0; i < PIN_GABINETU.length; i++) roznica |= a.charCodeAt(i) ^ PIN_GABINETU.charCodeAt(i);
+  return roznica === 0;
+}
+
+function zuzyjBilet() {
+  try {
+    const raw = sessionStorage.getItem(KLUCZ_BILETU);
+    sessionStorage.removeItem(KLUCZ_BILETU);
+    const t = Number(raw);
+    return Number.isFinite(t) && t > 0 && Date.now() - t >= 0 && Date.now() - t < BILET_WAZNY_MS;
+  } catch (e) {
+    return false;
+  }
+}
+
+function uruchomPetle() {
+  if (uruchomPetle.dziala) return;
+  uruchomPetle.dziala = true;
+  requestAnimationFrame(klatka);
+}
+
+function przygotujMuzyke() {
+  if (!muzykaGabinetu.getAttribute("src")) {
+    muzykaGabinetu.preload = "auto";
+    muzykaGabinetu.src = "Leszek.mp3";
+  }
+}
+
+function odblokujGabinet() {
+  if (gabinetOdblokowany) return;
+  gabinetOdblokowany = true;
+  document.title = TYTUL_GRY;
+  document.documentElement.classList.remove("zablokowany");
+  const bramka = document.getElementById("bramka-pin");
+  if (bramka) {
+    bramka.hidden = true;
+    bramka.setAttribute("aria-hidden", "true");
+  }
+  const stage = document.getElementById("stage");
+  if (stage) {
+    stage.removeAttribute("inert");
+    stage.removeAttribute("aria-hidden");
+  }
+  wczytajGrafiki();
+  przygotujMuzyke();
+  dopasuj();
+  uruchomPetle();
+  const start = document.getElementById("btn-start");
+  if (start) start.focus({ preventScroll: true });
+}
+
 /* =====================================================================
    GABINET DR. LESZEKA — konfiguracja sceny
    Canvas 1024x768: kadr ucięty z prawej (szafa poza kadrem), lewa strona
@@ -366,11 +519,15 @@ dopasuj();
 
 /* ---------- wczytywanie grafik (znacznik ?v= zawsze swiezy) ---------- */
 const img = {};
-for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
-  const obraz = new Image();
-  obraz.onerror = () => { obraz._blad = true; };
-  obraz.src = KATALOG_GRAFIK + cfg.plik + "?v=" + Date.now();
-  img[klucz] = obraz;
+function wczytajGrafiki() {
+  if (wczytajGrafiki.gotowe) return;
+  wczytajGrafiki.gotowe = true;
+  for (const [klucz, cfg] of Object.entries(GRAFIKI)) {
+    const obraz = new Image();
+    obraz.onerror = () => { obraz._blad = true; };
+    obraz.src = KATALOG_GRAFIK + cfg.plik + "?v=" + Date.now();
+    img[klucz] = obraz;
+  }
 }
 
 function rysuj(obraz, x, y, skala) {
@@ -561,7 +718,7 @@ function dzwiekDing() {
 function mnoznikSerii(seria) { return Math.min(4, 1 + Math.floor(seria / 4) * 0.5); }
 
 function uderz(czas) {
-  if (stan.faza !== "gra") return;
+  if (!gabinetOdblokowany || stan.faza !== "gra") return;
   if (czas - stan.ostatniHit < SPAM_OKNO * 1000) return; // anty-spam
   const dt = (czas - stan.ostatniHit) / 1000;
   stan.ostatniHit = czas;
@@ -620,6 +777,7 @@ function zatrzymajMuzyke() {
 }
 
 function startGry() {
+  if (!gabinetOdblokowany) return;
   stan.faza = "gra";
   stan.punkty = 0; stan.seria = 0; stan.mnoznik = 1;
   stan.ostatniHit = -99; delete stan.ostatniPoprzedni;
@@ -666,6 +824,7 @@ function koniecGry() {
 /* ---------- petla glowna ---------- */
 let poprzedniCzas = 0;
 function klatka(czas) {
+  if (!gabinetOdblokowany) return;
   const dt = Math.min(0.05, (czas - poprzedniCzas) / 1000 || 0);
   poprzedniCzas = czas;
 
@@ -697,7 +856,6 @@ function klatka(czas) {
   rysujEfekty(czas);
   requestAnimationFrame(klatka);
 }
-requestAnimationFrame(klatka);
 
 /* ---------- sterowanie ---------- */
 cv.addEventListener("pointerdown", (e) => {
@@ -706,7 +864,8 @@ cv.addEventListener("pointerdown", (e) => {
 });
 document.getElementById("btn-oklep").addEventListener("click", () => uderz(performance.now()));
 window.addEventListener("keydown", (e) => {
-  if (e.target.closest && e.target.closest("button, a")) return;
+  if (!gabinetOdblokowany) return;
+  if (e.target.closest && e.target.closest("button, a, input, textarea, form")) return;
   if (e.repeat) return;
   if (e.code === "Space" || e.code === "Enter") {
     if (stan.faza === "gra") { e.preventDefault(); uderz(performance.now()); }
@@ -724,6 +883,7 @@ function odswiezDzwiek() {
   btnDzwiek.setAttribute("aria-pressed", String(stan.dzwiek));
 }
 btnDzwiek.addEventListener("click", () => {
+  if (!gabinetOdblokowany) return;
   stan.dzwiek = !stan.dzwiek;
   localStorage.setItem("gabinet_dzwiek", stan.dzwiek ? "1" : "0");
   odswiezDzwiek();
@@ -735,6 +895,80 @@ btnDzwiek.addEventListener("click", () => {
   }
 });
 odswiezDzwiek();
+
+(function inicjujBramke() {
+  const form = document.getElementById("form-pin");
+  const wejscie = document.getElementById("pin-wejscie");
+  const blad = document.getElementById("pin-blad");
+  const klaw = document.getElementById("pin-klaw");
+
+  function pokazBlad(tekst) {
+    if (blad) {
+      blad.textContent = tekst;
+      blad.hidden = false;
+    }
+    if (!wejscie) return;
+    wejscie.setAttribute("aria-invalid", "true");
+    wejscie.classList.remove("zly");
+    void wejscie.offsetWidth;
+    wejscie.classList.add("zly");
+    wejscie.value = "";
+    wejscie.focus();
+  }
+
+  function cyfryZPola() {
+    return wejscie ? wejscie.value.replace(/\D/g, "").slice(0, 4) : "";
+  }
+
+  function wyslijPin(formularz) {
+    if (typeof formularz.requestSubmit === "function") formularz.requestSubmit();
+    else formularz.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  }
+
+  if (form && wejscie) {
+    wejscie.addEventListener("input", () => {
+      const cyfry = cyfryZPola();
+      if (wejscie.value !== cyfry) wejscie.value = cyfry;
+      if (blad && !blad.hidden) {
+        blad.hidden = true;
+        wejscie.removeAttribute("aria-invalid");
+      }
+      if (cyfry.length === 4) wyslijPin(form);
+    });
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const cyfry = cyfryZPola();
+      if (cyfry.length !== 4) {
+        pokazBlad("Wpisz 4-cyfrowy PIN.");
+        return;
+      }
+      if (pinZgadzaSie(cyfry)) {
+        odblokujGabinet();
+        return;
+      }
+      pokazBlad("Zły PIN. Spróbuj jeszcze raz.");
+    });
+  }
+
+  if (klaw && wejscie) {
+    klaw.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn || !klaw.contains(btn)) return;
+      if (btn.dataset.cyfra) {
+        if (wejscie.value.length >= 4) return;
+        wejscie.value += btn.dataset.cyfra;
+      } else if (btn.dataset.akcja === "usun") {
+        wejscie.value = wejscie.value.slice(0, -1);
+      } else if (btn.dataset.akcja === "czysc") {
+        wejscie.value = "";
+      } else return;
+      wejscie.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  if (zuzyjBilet()) odblokujGabinet();
+  else if (wejscie) wejscie.focus();
+})();
 </script>
 </body>
 </html>
