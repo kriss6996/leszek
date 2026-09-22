@@ -34,8 +34,8 @@
     display: flex; align-items: center; justify-content: center;
   }
   /* HUD leży NA TLE po lewej: zwarty chip z wynikami u góry (nad zlewem)
-     i pasek akcji na dole (pod zlewem). Środkowy pas po lewej
-     (zlew + dozownik) zostaje odsłonięty. */
+     i wąski pionowy pasek akcji przy lewej krawędzi (na oknie/roślinie).
+     Zlew z dozownikiem (scena od x=207) zostaje w całości odsłonięty. */
   #pasek-wynikow {
     position: absolute; top: 2%; left: 2%; z-index: 5;
     display: flex; align-items: center; gap: 12px; max-width: 62%;
@@ -63,26 +63,31 @@
     display: block; width: 100%; height: 100%;
     cursor: pointer; touch-action: none; border-radius: 6px;
   }
+  /* Wąski pionowy pasek przy lewej krawędzi tła (na oknie/roślinie):
+     szerokość ~64 px ekranu = do ~x=185 sceny, zlew (od x=207) wolny. */
   #panel-dol {
-    position: absolute; left: 2%; bottom: 2%; z-index: 5;
-    display: flex; align-items: stretch; gap: 8px; max-width: 96%;
+    position: absolute; left: 1.5%; top: 50%; transform: translateY(-50%); z-index: 5;
+    display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+    padding: 6px; border-radius: 14px; max-height: 96%;
+    background: rgba(20, 46, 35, .55);
   }
   #btn-oklep {
-    flex: 1 1 auto; min-width: 118px; max-width: 260px;
-    min-height: 52px; padding: 8px 14px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    width: 52px; min-height: 0; padding: 8px 4px;
     border: 1px solid #4db981; border-radius: 12px;
     background: rgba(35, 119, 77, .92); color: #fff;
-    font: inherit; font-size: 17px; font-weight: 800; white-space: nowrap;
+    font: inherit; font-size: 11px; font-weight: 800;
     cursor: pointer; touch-action: manipulation;
   }
-  #btn-oklep small { display: block; font-size: 11px; font-weight: 400; margin-top: 2px; color: #d4f8e3; }
+  #btn-oklep .oklep-ikona { font-size: 22px; line-height: 1; }
   #btn-oklep:active { background: #319b67; }
   #btn-oklep:disabled { opacity: .55; cursor: default; }
-  #przyciski { display: flex; gap: 8px; }
+  #przyciski { display: flex; flex-direction: column; gap: 6px; }
   #przyciski button, #przyciski a.dom {
-    font: inherit; font-weight: 700; font-size: 14px; min-height: 52px; min-width: 48px;
-    padding: 8px 10px; border-radius: 12px; border: 1px solid #537664;
-    background: rgba(25, 60, 46, .92); color: #fff; cursor: pointer; white-space: nowrap;
+    font: inherit; font-weight: 700; font-size: 16px;
+    width: 52px; min-height: 46px; padding: 6px 4px;
+    border-radius: 12px; border: 1px solid #537664;
+    background: rgba(25, 60, 46, .92); color: #fff; cursor: pointer;
     text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
   }
   #przyciski button:hover, #przyciski a.dom:hover { background: #285b43; }
@@ -96,19 +101,18 @@
     #combo-wartosc { font-size: 13px; }
     #widok { border-radius: 8px; }
     canvas { border-radius: 4px; }
-    #panel-dol { gap: 6px; }
-    #btn-oklep { min-height: 50px; padding: 6px 12px; font-size: 16px; min-width: 0; }
-    #przyciski { gap: 6px; }
+    #panel-dol { padding: 5px; gap: 5px; border-radius: 12px; }
+    #btn-oklep { width: 50px; padding: 7px 3px; font-size: 10px; }
+    #btn-oklep .oklep-ikona { font-size: 20px; }
+    #przyciski { gap: 5px; }
     #przyciski button, #przyciski a.dom {
-      min-height: 50px; min-width: 44px; padding: 6px 8px; font-size: 13px;
+      width: 50px; min-height: 44px; font-size: 15px;
     }
   }
   @media (max-width: 400px) {
     .hud .etykieta { font-size: 9px; }
     .hud .wartosc { font-size: 20px; }
-    #btn-oklep { min-height: 48px; font-size: 15px; }
-    #btn-oklep small { display: none; }
-    #przyciski button, #przyciski a.dom { min-height: 48px; min-width: 42px; }
+    #panel-dol { left: 1%; }
   }
   @media (max-height: 500px) and (orientation: landscape) {
     /* Nakładki zostają widoczne (gra się na nich nie opiera — canvas też klika),
@@ -117,9 +121,11 @@
     .hud .wartosc { font-size: 20px; }
     #combo-wrap { min-height: 0; }
     #tytul-gabinetu { display: none; }
-    #btn-oklep { min-height: 44px; font-size: 15px; padding: 4px 10px; }
-    #btn-oklep small { display: none; }
-    #przyciski button, #przyciski a.dom { min-height: 44px; min-width: 42px; }
+    #panel-dol { padding: 4px; gap: 4px; }
+    #btn-oklep { width: 46px; padding: 5px 2px; font-size: 9px; }
+    #btn-oklep .oklep-ikona { font-size: 18px; }
+    #przyciski { gap: 4px; }
+    #przyciski button, #przyciski a.dom { width: 46px; min-height: 40px; font-size: 14px; }
   }
 
   /* ---------- ekrany (start / koniec) ---------- */
@@ -204,12 +210,12 @@
 
       </header>
       <div id="panel-dol">
-        <button id="btn-oklep" disabled>Oklep plecy<small>Dotykaj w równym rytmie • idealnie co 0,6 sekundy</small></button>
+        <button id="btn-oklep" disabled title="Dotykaj w równym rytmie • idealnie co 0,6 sekundy"><span class="oklep-ikona">🖐️</span><span>Oklep</span></button>
 
         <div id="przyciski">
           <button id="btn-dzwiek" title="Muzyka" aria-label="Muzyka">🔊</button>
           <button id="btn-restart" title="Od nowa" aria-label="Rozpocznij od nowa">🔁</button>
-          <a class="dom" href="index.html" title="Strona główna">🏠 Strona główna</a>
+          <a class="dom" href="index.html" title="Strona główna" aria-label="Strona główna">🏠</a>
         </div>
       </div>
 
