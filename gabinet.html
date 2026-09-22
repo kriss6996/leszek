@@ -37,7 +37,7 @@
      i wąski pionowy pasek akcji przy lewej krawędzi (na oknie/roślinie).
      Zlew z dozownikiem (scena od x=207) zostaje w całości odsłonięty. */
   #pasek-wynikow {
-    position: absolute; top: 2%; left: 2%; z-index: 5;
+    position: absolute; top: 2%; left: 2%; z-index: 12;
     display: flex; align-items: center; gap: 12px; max-width: 62%;
     padding: 8px 12px; color: #fff;
     background: rgba(20, 46, 35, .82); border-radius: 12px;
@@ -63,12 +63,13 @@
     display: block; width: 100%; height: 100%;
     cursor: pointer; touch-action: none; border-radius: 6px;
   }
-  /* Wąski pionowy pasek przy lewej krawędzi tła (na oknie/roślinie):
-     szerokość ~64 px ekranu = do ~x=185 sceny, zlew (od x=207) wolny. */
+  /* Wąski pionowy pasek przy lewej krawędzi tła (na oknie/roślinie),
+     od dołu — na małym ekranie nie nachodzi na pasek wyniku.
+     Szerokość ~64 px ekranu = do ~x=185 sceny, zlew (od x=207) wolny. */
   #panel-dol {
-    position: absolute; left: 1.5%; top: 50%; transform: translateY(-50%); z-index: 5;
-    display: flex; flex-direction: column; align-items: stretch; gap: 6px;
-    padding: 6px; border-radius: 14px; max-height: 96%;
+    position: absolute; left: 1.5%; bottom: 2%; top: auto; transform: none; z-index: 5;
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 6px;
+    padding: 6px; border-radius: 14px; max-height: calc(100% - 5.5em);
     background: rgba(20, 46, 35, .55);
   }
   #btn-oklep {
@@ -188,6 +189,16 @@
     .przycisk-duzy { font-size: clamp(14px, 3vw, 22px); padding: .5em 1.3em; min-height: 44px; }
     .przycisk-dom { font-size: clamp(11px, 2vw, 16px); min-height: 40px; }
     #ekran-koniec .wynik-koniec { font-size: clamp(28px, 8vw, 60px); }
+  }
+
+  /* iPhone 13 mini / niski ekran: pasek wyniku zostaje u góry,
+     reszta menu i przyciski zaczynają się od dołu. */
+  @media (max-width: 600px), (max-height: 500px) {
+    #combo-wrap { min-height: 0; }
+    .ekran {
+      justify-content: safe flex-end;
+      padding-top: 4.75em;
+    }
   }
 
   /* Bramka PIN: dopóki <html> ma klasę zablokowany, gry nie widać i nie da się jej ruszyć. */
