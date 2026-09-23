@@ -415,55 +415,71 @@
 
     .toast[hidden] { display: none; }
 
+    /* Wąski ekran (telefon w pionie): 3 kolumny jak na iPadzie,
+       boczne panele zwężone do ikon, plansza maksymalnie duża, strzałki na dole. */
     body.narrow .app {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto minmax(0, 1fr) auto auto;
-      gap: 8px;
-      padding: 8px;
-    }
-
-    body.narrow .right {
-      grid-column: 1;
-      grid-row: 1;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 68px 68px;
-      align-items: center;
-      gap: 8px;
-      overflow: hidden;
-      padding: 8px;
-    }
-
-    body.narrow .stat-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 40px minmax(0, 1fr) 40px;
+      grid-template-rows: minmax(0, 1fr) auto;
       gap: 4px;
-      min-width: 0;
-    }
-    body.narrow .stat { padding: 6px 8px; }
-    body.narrow .stat strong { font-size: 15px; }
-    body.narrow .stat.best, body.narrow .level-block, body.narrow .right .label { display: none; }
-    body.narrow .hold-wrap, body.narrow .next-wrap { width: 68px; }
-    body.narrow #hold, body.narrow #next { width: 60px; height: 60px; }
-    body.narrow .touch button { height: 44px; }
-    body.narrow .btn-col { flex-direction: row; flex-wrap: wrap; width: 100%; gap: 6px; }
-    body.narrow .btn-col button {
-      flex: 1 1 calc(50% - 6px);
-      font-size: 12px;
-      padding: 8px 6px;
-      white-space: nowrap;
-    }
-    body.narrow .left { display: block; max-height: 96px; overflow: auto; }
-
-    body.narrow .center { grid-column: 1; grid-row: 2; }
-    body.narrow .touch { grid-column: 1; grid-row: 3; width: 100%; }
-
-    body.narrow .left {
-      grid-column: 1;
-      grid-row: 4;
+      padding: 4px;
+      padding-top: max(4px, env(safe-area-inset-top));
+      padding-bottom: max(4px, env(safe-area-inset-bottom));
     }
 
-    body.narrow .brand, body.narrow .hints, body.narrow #btnUrl { display: none; }
-    body.narrow a.home-top { display: inline-flex; align-items: center; }
+    body.narrow .panel {
+      padding: 3px 2px;
+      border-radius: 10px;
+      gap: 6px;
+    }
+
+    body.narrow .left, body.narrow .right {
+      overflow: hidden;
+      align-items: stretch;
+    }
+
+    body.narrow .brand, body.narrow .hints, body.narrow .level-block,
+    body.narrow .label, body.narrow .btn-col .txt { display: none; }
+
+    body.narrow .btn-col { gap: 6px; }
+    body.narrow .btn-col button, body.narrow .btn-col a.home-link {
+      padding: 0;
+      height: 38px;
+      font-size: 17px;
+      line-height: 1;
+      border-radius: 8px;
+    }
+    body.narrow .btn-col .ico { display: inline; }
+
+    body.narrow .stat-list { gap: 4px; }
+    body.narrow .stat { padding: 4px 3px; text-align: center; border-radius: 8px; }
+    body.narrow .stat span { font-size: 8px; letter-spacing: 0.04em; }
+    body.narrow .stat strong { font-size: 13px; margin-top: 0; }
+
+    body.narrow .hold-wrap, body.narrow .next-wrap { width: 100%; }
+    body.narrow .preview-box { border-radius: 8px; }
+    body.narrow #hold { width: 34px; height: 34px; }
+    body.narrow #next { width: 34px; height: 96px; }
+
+    body.narrow .center { grid-column: 2; grid-row: 1; }
+    body.narrow .board-frame { padding: 3px; border-radius: 10px; }
+
+    body.narrow .touch {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+      gap: 6px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    body.narrow .touch button { height: 50px; font-size: 22px; }
+    body.narrow .touch #tCCW { grid-column: 1; grid-row: 1; }
+    body.narrow .touch #tLeft { grid-column: 2; grid-row: 1; }
+    body.narrow .touch #tDown { grid-column: 3; grid-row: 1; }
+    body.narrow .touch #tRight { grid-column: 4; grid-row: 1; }
+    body.narrow .touch #tCW { grid-column: 5; grid-row: 1; }
+    body.narrow .touch #tPause { grid-column: 6; grid-row: 1; }
+    body.narrow .touch button.span2 { grid-column: span 3; grid-row: 2; height: 42px; font-size: 13px; }
+
+    .btn-col .ico { display: none; }
 
     body.short .hints { display: none; }
   </style>
@@ -496,12 +512,12 @@
       </div>
 
       <div class="btn-col">
-        <a class="home-link" href="index.html">← Strona główna</a>
-        <button type="button" id="btnBg">Zmień tło</button>
-        <button type="button" id="btnFile">Własny obraz</button>
-        <button type="button" id="btnUrl">Tło z linku</button>
-        <button type="button" id="btnMute">Dźwięk: włączony</button>
-        <button type="button" id="btnNew">Nowa gra</button>
+        <a class="home-link" href="index.html" title="Strona główna"><span class="ico">🏠</span><span class="txt">← Strona główna</span></a>
+        <button type="button" id="btnBg" title="Zmień tło"><span class="ico">🖼</span><span class="txt">Zmień tło</span></button>
+        <button type="button" id="btnFile" title="Własny obraz"><span class="ico">📷</span><span class="txt">Własny obraz</span></button>
+        <button type="button" id="btnUrl" title="Tło z linku"><span class="ico">🔗</span><span class="txt">Tło z linku</span></button>
+        <button type="button" id="btnMute" title="Dźwięk"><span class="ico" id="muteIco">🔊</span><span class="txt" id="muteTxt">Dźwięk: włączony</span></button>
+        <button type="button" id="btnNew" title="Nowa gra"><span class="ico">🔄</span><span class="txt">Nowa gra</span></button>
       </div>
     </aside>
 
@@ -512,7 +528,6 @@
     </main>
 
     <aside class="panel right">
-      <a class="home-top" href="index.html">← Główna</a>
       <div class="stat-list">
         <div class="stat"><span>Wynik</span><strong id="score">0</strong></div>
         <div class="stat best"><span>Najlepszy</span><strong id="best">0</strong></div>
@@ -1036,7 +1051,8 @@
     }
 
     function refreshMute() {
-      btnMute.textContent = muted ? "Włącz dźwięk" : "Wycisz";
+      document.getElementById("muteTxt").textContent = muted ? "Włącz dźwięk" : "Wycisz";
+      document.getElementById("muteIco").textContent = muted ? "🔇" : "🔊";
     }
 
     function roundRect(ctx, x, y, w, h, r) {
@@ -1404,18 +1420,19 @@
     }
 
     function fit() {
-      const narrow = window.innerWidth < 860;
+      const narrow = window.innerWidth < 700 && window.innerHeight > window.innerWidth;
       const short = window.innerHeight < 680;
       document.body.classList.toggle("narrow", narrow);
       document.body.classList.toggle("short", short);
       boardCanvas.style.width = "8px";
       boardCanvas.style.height = "8px";
       const rect = centerEl.getBoundingClientRect();
-      let availW = rect.width - 22;
-      let availH = rect.height - 22;
+      const pad = narrow ? 8 : 22;
+      let availW = rect.width - pad;
+      let availH = rect.height - pad;
       if (availW < 80 || availH < 140) {
         availW = Math.max(80, Math.min(window.innerWidth - 36, 340));
-        availH = Math.max(160, Math.min(window.innerHeight - (narrow ? 260 : 48), 680));
+        availH = Math.max(160, Math.min(window.innerHeight - (narrow ? 130 : 48), 680));
       }
       let block = Math.floor(Math.min(availW / COLS, availH / ROWS));
       block = Math.max(8, Math.min(36, block));
