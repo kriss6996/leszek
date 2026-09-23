@@ -668,6 +668,10 @@
     let arrTimer = 0;
     let audioCtx = null;
     let muted = loadFlag(MUTE_KEY);
+    const music = new Audio("Tetris.mp3");
+    music.loop = true;
+    music.preload = "auto";
+    music.volume = 0.45;
     const kb = new Set();
     const pointers = new Set();
 
@@ -921,6 +925,7 @@
       kb.clear();
       pointers.clear();
       fillQueue();
+      music.currentTime = 0;
       state = "playing";
       hideModal();
       spawn(pull());
@@ -939,6 +944,7 @@
         best = score;
         save(BEST_KEY, best);
       }
+      updateMusic();
       sfxOver();
       showModal(
         "Koniec gry",
@@ -956,6 +962,7 @@
         pointers.clear();
         dasDir = 0;
         showModal("Pauza", "Gra jest wstrzymana.", "Wznów", "", "pause");
+        updateMusic();
       } else if (state === "paused") {
         resume();
       }
@@ -965,6 +972,7 @@
       if (state !== "paused") return;
       state = "playing";
       hideModal();
+      updateMusic();
       if (document.activeElement) document.activeElement.blur();
     }
 
@@ -1017,6 +1025,18 @@
       if (!AC) return;
       if (!audioCtx) audioCtx = new AC();
       if (audioCtx.state === "suspended") audioCtx.resume();
+      updateMusic();
+    }
+
+    function updateMusic() {
+      if (!muted && state === "playing") {
+        if (music.paused) {
+          const p = music.play();
+          if (p && p.catch) p.catch(() => {});
+        }
+      } else if (!music.paused) {
+        music.pause();
+      }
     }
 
     function tone(freq, dur, when, type, vol) {
@@ -1553,6 +1573,7 @@
       save(MUTE_KEY, muted ? "1" : "0");
       refreshMute();
       if (!muted) ensureAudio();
+      updateMusic();
     });
     document.getElementById("btnNew").addEventListener("click", () => {
       ensureAudio();
