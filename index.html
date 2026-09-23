@@ -501,7 +501,7 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
     </div>
 
     <!-- Muzyka w tle: Ostryga.mp3 odtwarzana w pętli. -->
-    <audio id="muzyka-tla" src="Ostryga.mp3" loop preload="auto" aria-label="Muzyka w tle"></audio>
+    <audio id="muzyka-tla" src="Ostryga.mp3" loop autoplay playsinline preload="auto" aria-label="Muzyka w tle"></audio>
     <button type="button" id="muzyka-przelacznik" class="muzyka-przelacznik" aria-pressed="false" title="Włącz / wycisz muzykę w tle">🔊 Muzyka</button>
     <script>
     "use strict";
@@ -511,7 +511,7 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
       if (!muzyka || !przycisk) return;
 
       const KLUCZ_WYCISZENIA = "muzyka_tla_wyciszona";
-      const ZDARZENIA_ODBLOKOWANIA = ["pointerdown", "keydown", "touchstart"];
+      const ZDARZENIA_ODBLOKOWANIA = ["pointerdown", "pointerup", "mousedown", "click", "keydown", "touchstart", "touchend", "wheel", "scroll"];
       let wyciszona = false;
       try { wyciszona = localStorage.getItem(KLUCZ_WYCISZENIA) === "1"; } catch (err) {}
 
@@ -519,7 +519,7 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
       muzyka.volume = 0.5;
 
       function odswiezPrzycisk() {
-        const gra = !muzyka.paused && !wyciszona;
+        const gra = !muzyka.paused && !muzyka.muted && !wyciszona;
         przycisk.classList.toggle("wyciszona", !gra);
         przycisk.setAttribute("aria-pressed", gra ? "true" : "false");
         przycisk.textContent = gra ? "🔊 Muzyka" : "🔇 Muzyka";
@@ -534,18 +534,37 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
         ZDARZENIA_ODBLOKOWANIA.forEach((z) => document.removeEventListener(z, odblokuj, true));
       }
 
-      function graj() {
-        if (wyciszona) return Promise.resolve(false);
+      function sprobujOdtworzyc() {
         let p;
         try { p = muzyka.play(); } catch (err) { return Promise.resolve(false); }
         if (!p || typeof p.then !== "function") return Promise.resolve(true);
         return p.then(() => true).catch(() => false);
       }
 
+      // Start z dźwiękiem; jeśli przeglądarka zablokuje autoodtwarzanie,
+      // próbujemy wystartować wyciszeni (to jest dozwolone) i odciszyć przy
+      // pierwszej interakcji użytkownika.
+      function graj() {
+        if (wyciszona) return Promise.resolve(false);
+        muzyka.muted = false;
+        return sprobujOdtworzyc().then((ok) => {
+          if (ok) return true;
+          muzyka.muted = true;
+          return sprobujOdtworzyc().then((okCiche) => {
+            if (!okCiche) muzyka.muted = false;
+            return false; // nadal czekamy na interakcję, by przywrócić dźwięk
+          });
+        });
+      }
+
       // Przeglądarki blokują autoodtwarzanie dźwięku bez interakcji użytkownika —
       // wtedy muzyka startuje przy pierwszym kliknięciu / dotknięciu / klawiszu.
       function odblokuj() {
-        graj().then((ok) => { if (ok) usunOdblokowanie(); });
+        if (wyciszona) return;
+        muzyka.muted = false;
+        sprobujOdtworzyc().then((ok) => {
+          if (ok && !muzyka.muted) { usunOdblokowanie(); odswiezPrzycisk(); }
+        });
       }
 
       function czekajNaInterakcje() {
@@ -563,6 +582,7 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
           zapiszWyciszenie();
           usunOdblokowanie();
           muzyka.pause();
+          muzyka.muted = false;
           odswiezPrzycisk();
         }
       });
@@ -575,10 +595,20 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
         przycisk.title = "Nie udało się wczytać pliku Ostryga.mp3";
       });
 
-      odswiezPrzycisk();
-      if (!wyciszona) {
+      muzyka.addEventListener("volumechange", odswiezPrzycisk);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && !wyciszona && muzyka.paused) graj().then(odswiezPrzycisk);
+      });
+
+      function start() {
+        if (wyciszona) { odswiezPrzycisk(); return; }
         graj().then((ok) => { if (!ok) czekajNaInterakcje(); odswiezPrzycisk(); });
       }
+
+      odswiezPrzycisk();
+      // Start jak najwcześniej przy wczytywaniu strony (oraz po pełnym load).
+      start();
+      window.addEventListener("load", () => { if (!wyciszona && (muzyka.paused || muzyka.muted)) start(); });
     })();
     </script>
     <script>
