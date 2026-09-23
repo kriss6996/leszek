@@ -288,6 +288,22 @@
             60% { transform: translateX(-5px); }
             80% { transform: translateX(5px); }
         }
+
+        /* Muzyka w tle (Ostryga.mp3) — pływający przycisk włącz/wycisz. */
+        .muzyka-przelacznik {
+            position: fixed; right: 16px; bottom: 16px; z-index: 900;
+            display: inline-flex; align-items: center; gap: 8px;
+            font: inherit; font-weight: 800; font-size: 0.9rem;
+            padding: 10px 16px; min-height: 44px;
+            border: none; border-radius: 999px; cursor: pointer;
+            background: #ec4899; color: #fff;
+            box-shadow: 0 6px 18px rgba(236, 72, 153, .45);
+            touch-action: manipulation;
+        }
+        .muzyka-przelacznik:hover { background: #db2777; }
+        .muzyka-przelacznik:focus-visible { outline: 3px solid #007bff; outline-offset: 2px; }
+        .muzyka-przelacznik.wyciszona { background: #6c757d; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
+        .muzyka-przelacznik.wyciszona:hover { background: #5a6268; }
     </style>
 </head>
 
@@ -483,6 +499,88 @@ Gdy inni odwracają się plecami, ja... właśnie wtedy zaczynam pracę! 😄
             </form>
         </div>
     </div>
+
+    <!-- Muzyka w tle: Ostryga.mp3 odtwarzana w pętli. -->
+    <audio id="muzyka-tla" src="Ostryga.mp3" loop preload="auto" aria-label="Muzyka w tle"></audio>
+    <button type="button" id="muzyka-przelacznik" class="muzyka-przelacznik" aria-pressed="false" title="Włącz / wycisz muzykę w tle">🔊 Muzyka</button>
+    <script>
+    "use strict";
+    (function () {
+      const muzyka = document.getElementById("muzyka-tla");
+      const przycisk = document.getElementById("muzyka-przelacznik");
+      if (!muzyka || !przycisk) return;
+
+      const KLUCZ_WYCISZENIA = "muzyka_tla_wyciszona";
+      const ZDARZENIA_ODBLOKOWANIA = ["pointerdown", "keydown", "touchstart"];
+      let wyciszona = false;
+      try { wyciszona = localStorage.getItem(KLUCZ_WYCISZENIA) === "1"; } catch (err) {}
+
+      muzyka.loop = true;
+      muzyka.volume = 0.5;
+
+      function odswiezPrzycisk() {
+        const gra = !muzyka.paused && !wyciszona;
+        przycisk.classList.toggle("wyciszona", !gra);
+        przycisk.setAttribute("aria-pressed", gra ? "true" : "false");
+        przycisk.textContent = gra ? "🔊 Muzyka" : "🔇 Muzyka";
+        przycisk.title = gra ? "Wycisz muzykę w tle" : "Włącz muzykę w tle";
+      }
+
+      function zapiszWyciszenie() {
+        try { localStorage.setItem(KLUCZ_WYCISZENIA, wyciszona ? "1" : "0"); } catch (err) {}
+      }
+
+      function usunOdblokowanie() {
+        ZDARZENIA_ODBLOKOWANIA.forEach((z) => document.removeEventListener(z, odblokuj, true));
+      }
+
+      function graj() {
+        if (wyciszona) return Promise.resolve(false);
+        let p;
+        try { p = muzyka.play(); } catch (err) { return Promise.resolve(false); }
+        if (!p || typeof p.then !== "function") return Promise.resolve(true);
+        return p.then(() => true).catch(() => false);
+      }
+
+      // Przeglądarki blokują autoodtwarzanie dźwięku bez interakcji użytkownika —
+      // wtedy muzyka startuje przy pierwszym kliknięciu / dotknięciu / klawiszu.
+      function odblokuj() {
+        graj().then((ok) => { if (ok) usunOdblokowanie(); });
+      }
+
+      function czekajNaInterakcje() {
+        ZDARZENIA_ODBLOKOWANIA.forEach((z) => document.addEventListener(z, odblokuj, { capture: true, passive: true }));
+      }
+
+      przycisk.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (wyciszona) {
+          wyciszona = false;
+          zapiszWyciszenie();
+          graj().then((ok) => { if (!ok) czekajNaInterakcje(); odswiezPrzycisk(); });
+        } else {
+          wyciszona = true;
+          zapiszWyciszenie();
+          usunOdblokowanie();
+          muzyka.pause();
+          odswiezPrzycisk();
+        }
+      });
+
+      muzyka.addEventListener("play", odswiezPrzycisk);
+      muzyka.addEventListener("pause", odswiezPrzycisk);
+      muzyka.addEventListener("error", () => {
+        przycisk.disabled = true;
+        przycisk.textContent = "🔇 Brak muzyki";
+        przycisk.title = "Nie udało się wczytać pliku Ostryga.mp3";
+      });
+
+      odswiezPrzycisk();
+      if (!wyciszona) {
+        graj().then((ok) => { if (!ok) czekajNaInterakcje(); odswiezPrzycisk(); });
+      }
+    })();
+    </script>
     <script>
     "use strict";
     (function () {
